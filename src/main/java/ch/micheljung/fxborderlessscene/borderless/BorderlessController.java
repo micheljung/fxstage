@@ -1,7 +1,7 @@
 /*
  * 
  */
-package main.java.com.goxr3plus.fxborderlessscene.borderless;
+package ch.micheljung.fxborderlessscene.borderless;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
@@ -12,7 +12,7 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import main.java.com.goxr3plus.fxborderlessscene.window.TransparentWindow;
+import ch.micheljung.fxborderlessscene.window.TransparentWindow;
 
 
 /**

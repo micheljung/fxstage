@@ -1,9 +1,7 @@
 /*
  * 
  */
-package main.java.com.goxr3plus.fxborderlessscene.borderless;
-
-import java.io.IOException;
+package ch.micheljung.fxborderlessscene.borderless;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.fxml.FXMLLoader;
@@ -14,6 +12,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import java.io.IOException;
 
 /**
  * Undecorated JavaFX Scene with implemented move, resize, minimize, maximize and Aero Snap.

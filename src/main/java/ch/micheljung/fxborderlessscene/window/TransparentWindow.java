@@ -1,11 +1,7 @@
 /**
  * OOUUUUUUUUU PARTYYYYYYYYYYYYYYYYYYYYY!
  */
-package main.java.com.goxr3plus.fxborderlessscene.window;
-
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+package ch.micheljung.fxborderlessscene.window;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,6 +11,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author GOXR3PLUS
