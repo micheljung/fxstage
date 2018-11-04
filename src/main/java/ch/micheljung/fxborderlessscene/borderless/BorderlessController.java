@@ -3,16 +3,17 @@
  */
 package ch.micheljung.fxborderlessscene.borderless;
 
+import ch.micheljung.fxborderlessscene.window.TransparentWindow;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import ch.micheljung.fxborderlessscene.window.TransparentWindow;
 
 
 /**
@@ -23,7 +24,12 @@ import ch.micheljung.fxborderlessscene.window.TransparentWindow;
  * @version 1.0
  */
 public class BorderlessController {
-	
+
+	public Button minimizeButton;
+	public Button maximizeButton;
+	public Button restoreButton;
+	public Button closeButton;
+
 	/** The stage. */
 	private Stage stage;
 	
@@ -116,7 +122,6 @@ public class BorderlessController {
 	 */
 	@FXML
 	private void initialize() {
-		
 		setResizeControl(leftPane, "left");
 		setResizeControl(rightPane, "right");
 		setResizeControl(topPane, "top");
@@ -125,6 +130,10 @@ public class BorderlessController {
 		setResizeControl(topRightPane, "top-right");
 		setResizeControl(bottomLeftPane, bottom + "-left");
 		setResizeControl(bottomRightPane, bottom + "-right");
+
+		maximizeButton.managedProperty().bind(maximizeButton.visibleProperty());
+		restoreButton.managedProperty().bind(restoreButton.visibleProperty());
+		restoreButton.visibleProperty().bind(maximizeButton.visibleProperty().not());
 	}
 	
 	/**
@@ -140,25 +149,20 @@ public class BorderlessController {
 	/**
 	 * Maximize on/off the application.
 	 */
-	protected void maximize() {
+	protected void toggleMaximize() {
 		Rectangle2D screen;
 		
-		try {
-			if (Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth() / 2, stage.getHeight() / 2).isEmpty())
-				screen = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight()).get(0).getVisualBounds();
-			else
-				screen = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth() / 2, stage.getHeight() / 2).get(0).getVisualBounds();
-			
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return;
-		}
-		
+		if (Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth() / 2, stage.getHeight() / 2).isEmpty())
+			screen = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight()).get(0).getVisualBounds();
+		else
+			screen = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth() / 2, stage.getHeight() / 2).get(0).getVisualBounds();
+
 		if (maximized.get()) {
 			stage.setWidth(prevSize.x);
 			stage.setHeight(prevSize.y);
 			stage.setX(prevPos.x);
 			stage.setY(prevPos.y);
+			maximizeButton.setVisible(true);
 			setMaximized(false);
 		} else {
 			// Record position and size, and maximize.
@@ -182,7 +186,8 @@ public class BorderlessController {
 			stage.setY(screen.getMinY());
 			stage.setWidth(screen.getWidth());
 			stage.setHeight(screen.getHeight());
-			
+
+			maximizeButton.setVisible(false);
 			setMaximized(true);
 		}
 	}
@@ -193,7 +198,7 @@ public class BorderlessController {
 	protected void minimize() {
 		stage.setIconified(true);
 	}
-	
+
 	/**
 	 * Set a node that can be pressed and dragged to move the application around.
 	 * 
@@ -368,7 +373,7 @@ public class BorderlessController {
 		// Maximize on double click.
 		node.setOnMouseClicked(m -> {
 			if ( ( MouseButton.PRIMARY.equals(m.getButton()) ) && ( m.getClickCount() == 2 ))
-				maximize();
+				toggleMaximize();
 		});
 		
 		// Aero Snap on release.
@@ -596,4 +601,19 @@ public class BorderlessController {
 		return transparentWindow;
 	}
 
+	public void onMinimizeButtonClicked() {
+		minimize();
+	}
+
+	public void onMaximiseButtonClicked() {
+		toggleMaximize();
+	}
+
+	public void onRestoreButtonClicked() {
+		toggleMaximize();
+	}
+
+	public void onCloseButtonClicked() {
+		stage.close();
+	}
 }
