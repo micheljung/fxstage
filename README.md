@@ -43,6 +43,6 @@ https://jitpack.io/#micheljung/FX-BorderlessScene
 <dependency>
   <groupId>com.github.micheljung</groupId>
   <artifactId>FX-BorderlessScene</artifactId>
-  <version>V3.1.0</version>
+  <version>3.2.0</version>
 </dependency>
 ```
