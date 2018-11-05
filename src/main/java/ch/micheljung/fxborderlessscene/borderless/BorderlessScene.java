@@ -11,7 +11,6 @@ import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 import java.io.IOException;
 
@@ -47,8 +46,6 @@ public class BorderlessScene extends Scene {
 	 *
 	 * @param stage
 	 *            your stage.
-	 * @param stageStyle
-	 *            <b>Undecorated</b> and <b>Transparent</b> StageStyles are accepted or else the Transparent StageStyle will be set.
 	 * @param sceneRoot
 	 *            The root of the Scene
 	 * @param minWidth
@@ -57,7 +54,7 @@ public class BorderlessScene extends Scene {
 	 *            The minimum height that the Stage can have
 	 *
 	 */
-	public BorderlessScene(Stage stage, StageStyle stageStyle, Parent sceneRoot, double minWidth, double minHeight) {
+	public BorderlessScene(Stage stage, Parent sceneRoot, double minWidth, double minHeight) {
 		super(new Pane());
 		try {
 
@@ -75,8 +72,6 @@ public class BorderlessScene extends Scene {
 			this.controller.setStage(stage);
 			this.controller.createTransparentWindow(stage);
 
-			// StageStyle
-			stage.initStyle(stageStyle);
 			this.stage = stage;
 
 			// minSize
