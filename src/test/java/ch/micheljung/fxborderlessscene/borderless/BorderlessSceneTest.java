@@ -15,7 +15,7 @@ public class BorderlessSceneTest extends Application {
 
   @Override
   public void start(Stage primaryStage) {
-    BorderlessScene scene = new BorderlessScene(primaryStage, StageStyle.UNDECORATED, new Label("Test"), 100, 100);
+    BorderlessScene scene = new BorderlessScene(primaryStage, new Label("Test"), 100, 100);
     primaryStage.setScene(scene);
     primaryStage.show();
   }
