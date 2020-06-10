@@ -13,7 +13,11 @@ public class Main {
 
     @Override
     public void start(Stage primaryStage) {
-      CustomStage.configure(primaryStage).apply();
+      CustomStage.configure(primaryStage)
+        .useNative(true)
+        .blurBehind(true)
+        .alpha(false)
+        .apply();
     }
   }
 }

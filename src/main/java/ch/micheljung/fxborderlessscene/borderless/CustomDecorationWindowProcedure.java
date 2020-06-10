@@ -1,26 +1,19 @@
 package ch.micheljung.fxborderlessscene.borderless;
 
-import com.sun.jna.Function;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
-import com.sun.jna.platform.win32.WinNT;
+import com.sun.jna.platform.win32.WinDef.BOOL;
+import com.sun.jna.platform.win32.WinDef.DWORD;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.WinUser;
-import com.sun.jna.win32.W32APIOptions;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static com.sun.jna.platform.win32.WinDef.HWND;
 import static com.sun.jna.platform.win32.WinDef.LPARAM;
 import static com.sun.jna.platform.win32.WinDef.LRESULT;
 import static com.sun.jna.platform.win32.WinDef.RECT;
 import static com.sun.jna.platform.win32.WinDef.WPARAM;
+import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static com.sun.jna.platform.win32.WinUser.SWP_FRAMECHANGED;
 import static com.sun.jna.platform.win32.WinUser.SWP_NOMOVE;
 import static com.sun.jna.platform.win32.WinUser.SWP_NOOWNERZORDER;
@@ -45,53 +38,80 @@ class CustomDecorationWindowProcedure implements WinUser.WindowProc {
    */
   private static final int WM_NCHITTEST = 0x0084;
 
-  private static final int HTTOPLEFT = 13;
-  private static final int HTTOP = 12;
-  private static final int HTCAPTION = 2;
-  private static final int HTTOPRIGHT = 14;
-  private static final int HTLEFT = 10;
-  private static final int HTNOWHERE = 0;
-  private static final int HTRIGHT = 11;
-  private static final int HTBOTTOMLEFT = 16;
-  private static final int HTBOTTOM = 15;
-  private static final int HTBOTTOMRIGHT = 17;
-  private static final int HTSYSMENU = 3;
+  private static final int WM_ACTIVATE = 0x0006;
 
-  private static final User32Ex user32Ex = Native.load("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
-  private static final NativeLibrary dwmApi = NativeLibrary.getInstance("dwmapi");
+  private static final int WA_ACTIVE = 1;
+  private static final int WA_CLICKACTIVE = 2;
+  private static final int WA_INACTIVE = 0;
+
+  private static final User32Ex user32Ex = User32Ex.INSTANCE;
+
   public static final LRESULT LRESULT_ZERO = new LRESULT(0);
+  private static final DwmApi dwmApi = DwmApi.INSTANCE;
 
-  private final ComponentBinding parameters;
+  private final ComponentDimensions dimensions;
 
   private final BaseTSD.LONG_PTR defaultWindowsProcedure;
+  private final boolean alpha;
+  private final boolean blurBehind;
 
-  @Structure.FieldOrder({"cxLeftWidth", "cxRightWidth", "cyTopHeight", "cyBottomHeight"})
-  public static class Margins extends Structure implements Structure.ByReference {
+  CustomDecorationWindowProcedure(HWND hwnd, ComponentDimensions dimensions, boolean alpha, boolean blurBehind) {
+    this.dimensions = dimensions;
+    this.alpha = alpha;
+    this.blurBehind = blurBehind;
 
-    public int cxLeftWidth = -1;
-    public int cxRightWidth = -1;
-    public int cyTopHeight = -1;
-    public int cyBottomHeight = -1;
-  }
+    defaultWindowsProcedure = user32Ex.SetWindowLongPtr(hwnd, GWL_WNDPROC, this);
 
-  CustomDecorationWindowProcedure(HWND hwnd, ComponentBinding parameters) {
-    this.parameters = parameters;
-    defaultWindowsProcedure = user32Ex.SetWindowLongPtr(hwnd, User32Ex.GWLP_WNDPROC, this);
+    enableBlurBehind(hwnd);
+    if (blurBehind && isBlurBehindAvailable()) {
+      enableBlurBehind(hwnd);
+    }
 
-    extendFrameIntoClientArea(hwnd);
+    WinDef.BOOLByReference boolByReference = new WinDef.BOOLByReference();
+    WinDef.LPVOID pvAttribute = new WinDef.LPVOID(boolByReference.getPointer());
+    dwmApi.DwmGetWindowAttribute(hwnd, new DWORD(DwmApi.WindowCompositionAttribute.DWMWA_NCRENDERING_ENABLED), pvAttribute, new DWORD(BOOL.SIZE));
+
+    if (boolByReference.getValue().booleanValue()) {
+      System.out.println("Enabled");
+    }
+
+    if (isWindows7()) {
+      extendFrameIntoClientArea(hwnd);
+      if (blurBehind) {
+        enableBlurBehind(hwnd);
+      }
+    }
+    if (isWindows10()) {
+//      setAero10(hwnd);
+    }
+
 
     user32Ex.SetWindowPos(hwnd, hwnd, 0, 0, 0, 0,
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOOWNERZORDER);
   }
 
-  private void extendFrameIntoClientArea(HWND hwnd) {
-    HRESULT result = (HRESULT) NativeLibrary.getInstance("dwmapi")
-      .getFunction("DwmExtendFrameIntoClientArea")
-      .invoke(HRESULT.class, new Object[]{hwnd, new Margins()});
+  private boolean isWindows7() {
+    // FIXME implement
+    return false;
+  }
 
-    if (result.intValue() != 0) {
-      throw new IllegalStateException("Could not call DwmExtendFrameIntoClientArea");
-    }
+  private boolean isWindows10() {
+    // FIXME implement
+    return true;
+  }
+
+  private boolean isBlurBehindAvailable() {
+    BOOL pfEnabled = new BOOL();
+    dwmApi.DwmIsCompositionEnabled(pfEnabled);
+    return pfEnabled.booleanValue();
+  }
+
+  private void enableBlurBehind(HWND hwnd) {
+    DwmApi.DwmBlurBehind pBlurBehind = new DwmApi.DwmBlurBehind();
+    pBlurBehind.dwFlags = new DWORD(DwmApi.DWM_BB_ENABLE);
+    pBlurBehind.fEnable = new BOOL(true);
+
+    dwmApi.DwmEnableBlurBehindWindow(hwnd, pBlurBehind);
   }
 
   @Override
@@ -99,15 +119,14 @@ class CustomDecorationWindowProcedure implements WinUser.WindowProc {
     LRESULT lresult;
     switch (uMsg) {
       case WM_NCHITTEST:
-        // Determines which area is used for resize and which area is used for dragging (including windows snap).
-        lresult = hitTest(hwnd, uMsg, wparam, lparam);
+        lresult = hitTest(hwnd);
         if (lresult.intValue() == LRESULT_ZERO.intValue()) {
           return user32Ex.CallWindowProc(defaultWindowsProcedure, hwnd, uMsg, wparam, lparam);
         }
         return lresult;
 
       case WM_DESTROY:
-        user32Ex.SetWindowLongPtr(hwnd, User32Ex.GWLP_WNDPROC, defaultWindowsProcedure);
+        user32Ex.SetWindowLongPtr(hwnd, GWL_WNDPROC, defaultWindowsProcedure);
         return LRESULT_ZERO;
 
       case WM_NCCALCSIZE:
@@ -122,57 +141,48 @@ class CustomDecorationWindowProcedure implements WinUser.WindowProc {
     }
   }
 
-  private LRESULT hitTest(HWND hWnd, int message, WPARAM wParam, LPARAM lParam) {
-    int borderThickness = parameters.getFrameResizeBorderThickness();
+  private void extendFrameIntoClientArea(HWND hwnd) {
+    DwmApi.Margins pMarInset = new DwmApi.Margins();
+    if (isWindows7()) {
+      pMarInset.cxLeftWidth = 1;
+    } else if (isWindows10()) {
+      pMarInset.cxLeftWidth = 0;
+    }
 
+    HRESULT hresult = dwmApi.DwmExtendFrameIntoClientArea(hwnd, pMarInset);
+    if (hresult.intValue() != 0) {
+      throw new IllegalStateException("Could not call DwmExtendFrameIntoClientArea");
+    }
+  }
+
+//  private void setAero10(HWND hwnd) {
+//    // FIXME somehow on Win10 1809 this doesn't work
+//    if (false) {
+//      return;
+//    }
+//
+//    DwmApi.AccentPolicy accent = new DwmApi.AccentPolicy();
+//    accent.accentState = DwmApi.AccentState.ACCENT_ENABLE_BLURBEHIND;
+//    accent.write();
+//
+//    User32Ex.WindowCompositionAttributeData data = new User32Ex.WindowCompositionAttributeData();
+//    data.attribute = DwmApi.WindowCompositionAttribute.WCA_ACCENT_POLICY;
+//    data.data = accent.getPointer();
+//    data.sizeOfData = accent.size();
+//
+//    HRESULT hresult = user32Ex.SetWindowCompositionAttribute(hwnd, data);
+//    if (hresult.intValue() != 0) {
+//      throw new IllegalStateException("Could not call SetWindowCompositionAttribute: " + hresult.intValue());
+//    }
+//  }
+
+  /** Determines which area is used for resize and which area is used for dragging. */
+  private LRESULT hitTest(HWND hWnd) {
     WinDef.POINT mouse = new WinDef.POINT();
     RECT window = new RECT();
     User32.INSTANCE.GetCursorPos(mouse);
     User32.INSTANCE.GetWindowRect(hWnd, window);
 
-    int row = 1;
-    int col = 1;
-    boolean isOnResizeBorder = false;
-    boolean isOnFrameDrag = false;
-
-    int topOffset = parameters.getTitleBarHeight() == 0 ? borderThickness : parameters.getTitleBarHeight();
-    if (mouse.y >= window.top && mouse.y < window.top + topOffset + borderThickness) {
-      // Top Resizing
-      isOnResizeBorder = (mouse.y < (window.top + borderThickness));
-
-      if (!isOnResizeBorder) {
-        isOnFrameDrag = (mouse.y <= window.top + parameters.getTitleBarHeight() + borderThickness)
-          && (mouse.x < (window.right - (parameters.getControlBoxWidth()
-          + parameters.getExtraRightReservedWidth())))
-          && (mouse.x > (window.left + parameters.getIconWidth()
-          + parameters.getExtraLeftReservedWidth()));
-      }
-      // Top Resizing or Caption Moving
-      row = 0;
-    } else if (mouse.y < window.bottom && mouse.y >= window.bottom - borderThickness) {
-      // Bottom Resizing
-      row = 2;
-    }
-
-    if (mouse.x >= window.left && mouse.x < window.left + borderThickness) {
-      // Left Resizing
-      col = 0;
-    } else if (mouse.x < window.right && mouse.x >= window.right - borderThickness) {
-      // Right Resizing
-      col = 2;
-    }
-
-    if (col != 1 && mouse.y > window.top + borderThickness) {
-      // Don't do top left/right resizing for the whole title bar height, just for border thickness
-      row = 1;
-    }
-
-    int[][] hitTests = {
-      {HTTOPLEFT, isOnResizeBorder ? HTTOP : isOnFrameDrag ? HTCAPTION : HTNOWHERE, HTTOPRIGHT},
-      {HTLEFT, HTNOWHERE, HTRIGHT},
-      {HTBOTTOMLEFT, HTBOTTOM, HTBOTTOMRIGHT},
-    };
-
-    return new LRESULT(hitTests[row][col]);
+    return new LRESULT(HitTest.hitTest(new Rect(window), new Point(mouse), dimensions).windowsValue);
   }
 }

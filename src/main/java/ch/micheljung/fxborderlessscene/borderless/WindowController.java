@@ -29,7 +29,7 @@ public class WindowController {
       windowRoot.getScene().windowProperty().addListener(observable1 -> {
         maximizeButton.visibleProperty().bind(getStage().maximizedProperty().not());
         getStage().maximizedProperty().addListener(observable2 -> {
-          windowRoot.pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized());
+          getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized());
         });
       });
     });

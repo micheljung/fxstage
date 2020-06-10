@@ -13,11 +13,13 @@ public enum HitTestResult {
   BOTTOMRIGHT(17),
   SYSMENU(3);
 
+  final int windowsValue;
+
   /**
    * @param windowsValue see <a href="https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-nchittest#return-value">WM_NCHITTEST
    * return values</a>
    */
   HitTestResult(int windowsValue) {
-
+    this.windowsValue = windowsValue;
   }
 }

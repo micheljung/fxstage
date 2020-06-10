@@ -1,6 +1,3 @@
-/*
- *
- */
 package ch.micheljung.fxborderlessscene.borderless;
 
 class Delta {

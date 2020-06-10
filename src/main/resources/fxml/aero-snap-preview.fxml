@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<StackPane fx:id="transparentRoot" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308"
+           prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/11.0.1"
+           stylesheets="@indicator.css"
+           xmlns:fx="http://javafx.com/fxml/1">
+  <Pane fx:id="translucentIndicator" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+  </Pane>
+</StackPane>

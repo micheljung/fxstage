@@ -4,7 +4,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.Node;
 
-class ComponentBinding {
+class ComponentDimensions {
 
   private static final int DEFAULT_TITLE_BAR_HEIGHT = 30;
 
