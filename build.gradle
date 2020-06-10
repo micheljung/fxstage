@@ -1,0 +1,39 @@
+import org.gradle.internal.os.OperatingSystem
+
+plugins {
+  id 'java-library'
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+version "${version}"
+project.ext.javaFxPlatform = "${javaFxPlatform}"
+
+if (javaFxPlatform == "unspecified") {
+  switch (OperatingSystem.current()) {
+    case OperatingSystem.LINUX:
+      project.ext.javaFxPlatform = "linux"
+      break
+    case OperatingSystem.MAC_OS:
+      project.ext.javaFxPlatform = "mac"
+      break
+    case OperatingSystem.WINDOWS:
+      project.ext.javaFxPlatform = "win"
+      break
+  }
+}
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  api "net.java.dev.jna:jna:${jnaVersion}"
+  api "net.java.dev.jna:jna-platform:${jnaVersion}"
+
+  compileOnly "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
+  compileOnly "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
+  compileOnly "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
+  compileOnly "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
+}

@@ -1,0 +1,21 @@
+plugins {
+  id 'java'
+}
+
+repositories {
+  jcenter()
+}
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+project.ext.javaFxPlatform = rootProject.ext.javaFxPlatform
+
+dependencies {
+  implementation project(':')
+
+  implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
+}
