@@ -1,5 +1,6 @@
 plugins {
   id 'java'
+  id 'application'
 }
 
 repositories {
@@ -8,6 +9,8 @@ repositories {
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
+
+mainClassName = 'ch.micheljung.fxborderlessscene.Main'
 
 project.ext.javaFxPlatform = rootProject.ext.javaFxPlatform
 

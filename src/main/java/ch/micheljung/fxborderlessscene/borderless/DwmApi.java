@@ -24,7 +24,7 @@ public interface DwmApi extends StdCallLibrary, WinUser, WinNT {
   HRESULT DwmEnableBlurBehindWindow(HWND hWnd, DwmBlurBehind pBlurBehind);
 
   /**
-   * Enables the blur effect on a specified window.
+   * @see <a href="https://docs.microsoft.com/en-us/windows/win32/api/dwmapi/nf-dwmapi-dwmextendframeintoclientarea?redirectedfrom=MSDN">MSDN</a>
    */
   HRESULT DwmExtendFrameIntoClientArea(HWND hWnd, Margins pMarInset);
 
@@ -76,6 +76,16 @@ public interface DwmApi extends StdCallLibrary, WinUser, WinNT {
 
   @Structure.FieldOrder({"cxLeftWidth", "cxRightWidth", "cyTopHeight", "cyBottomHeight"})
   class Margins extends Structure implements Structure.ByReference {
+    public Margins() {
+    }
+
+    public Margins(int cxLeftWidth, int cxRightWidth, int cyTopHeight, int cyBottomHeight) {
+      this.cxLeftWidth = cxLeftWidth;
+      this.cxRightWidth = cxRightWidth;
+      this.cyTopHeight = cyTopHeight;
+      this.cyBottomHeight = cyBottomHeight;
+    }
+
     public int cxLeftWidth = 0;
     public int cxRightWidth = 0;
     public int cyTopHeight = 0;
@@ -87,8 +97,10 @@ public interface DwmApi extends StdCallLibrary, WinUser, WinNT {
     int ACCENT_ENABLE_GRADIENT = 1;
     int ACCENT_ENABLE_TRANSPARENTGRADIENT = 2;
     int ACCENT_ENABLE_BLURBEHIND = 3;
-    int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4; // RS4 1803
-    int ACCENT_ENABLE_HOSTBACKDROP = 5; // RS5 1809
+    /** Added with Windows 10, Version 1803 (Build 17134). */
+    int ACCENT_ENABLE_ACRYLICBLURBEHIND = 4;
+    /** Added with Windows 10, Version 1809 (Build 17763). */
+    int ACCENT_ENABLE_HOSTBACKDROP = 5;
     int ACCENT_INVALID_STATE = 6;
   }
 

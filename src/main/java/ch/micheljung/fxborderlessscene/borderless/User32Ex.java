@@ -13,6 +13,9 @@ interface User32Ex extends User32 {
   /**
    * Sets a custom window procedure for the application window, allowing to determine how to handle intercepted
    * messages.
+   *
+   * @return If the function succeeds, the return value is the previous value of the specified offset. If the function
+   * fails, the return value is zero. To get extended error information, call GetLastError.
    */
   LONG_PTR SetWindowLongPtr(HWND hWnd, int nIndex, WindowProc wndProc);
 

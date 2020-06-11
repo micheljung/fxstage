@@ -26,6 +26,7 @@ public abstract class CustomStage {
     private Function<Parent, Scene> sceneFactory = root -> new Scene(root, 0, 0);
     private boolean blurBehind;
     private boolean alpha;
+    private boolean useAcrylic;
 
     public Builder(Stage stage) {
       this.stage = stage;
@@ -81,6 +82,11 @@ public abstract class CustomStage {
       return this;
     }
 
+    public Builder useAcrylic(boolean useAcrylic) {
+      this.useAcrylic = useAcrylic;
+      return this;
+    }
+
     public void apply() {
       if (fxmlLoader == null) {
         fxmlLoader = new FXMLLoader();
@@ -88,17 +94,10 @@ public abstract class CustomStage {
 
       boolean useWindows = Platform.isWindows() && this.useNative;
 
-      String fxmlFile;
-      if (useWindows) {
-        fxmlFile = "/fxml/windows.fxml";
-      } else {
-        fxmlFile = "/fxml/undecorated.fxml";
-      }
-
       Parent root;
       WindowController controller;
       try {
-        fxmlLoader.setLocation(CustomStage.class.getResource(fxmlFile));
+        fxmlLoader.setLocation(CustomStage.class.getResource(getFxmlFile(useWindows)));
         root = fxmlLoader.load();
         controller = fxmlLoader.getController();
       } catch (IOException e) {
@@ -111,18 +110,27 @@ public abstract class CustomStage {
       }
 
       Scene scene = sceneFactory.apply(root);
-      scene.setFill(Color.color(0, 0, 0, 0.01));
+      scene.setFill(Color.TRANSPARENT);
       stage.setScene(scene);
 
       if (useWindows) {
-        stage.initStyle(StageStyle.DECORATED);
         stage.show();
-        new WindowsCustomStage(componentDimensions, alpha, blurBehind);
+        new WindowsCustomStage(componentDimensions, alpha, blurBehind, useAcrylic);
       } else {
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.show();
         new UndecoratedStage(root, stage, componentDimensions);
       }
+    }
+
+    private static String getFxmlFile(boolean useWindows) {
+      String fxmlFile;
+      if (useWindows) {
+        fxmlFile = "/fxml/windows.fxml";
+      } else {
+        fxmlFile = "/fxml/undecorated.fxml";
+      }
+      return fxmlFile;
     }
   }
 }

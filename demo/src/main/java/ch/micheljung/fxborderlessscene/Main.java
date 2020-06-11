@@ -14,8 +14,9 @@ public class Main {
     @Override
     public void start(Stage primaryStage) {
       CustomStage.configure(primaryStage)
-        .useNative(true)
+        .useAcrylic(true)
         .blurBehind(true)
+        .useNative(true)
         .alpha(false)
         .apply();
     }
