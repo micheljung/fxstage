@@ -11,11 +11,6 @@ import static com.sun.jna.platform.win32.WinDef.LRESULT;
 import static com.sun.jna.platform.win32.WinDef.RECT;
 import static com.sun.jna.platform.win32.WinDef.WPARAM;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
-import static com.sun.jna.platform.win32.WinUser.SWP_FRAMECHANGED;
-import static com.sun.jna.platform.win32.WinUser.SWP_NOMOVE;
-import static com.sun.jna.platform.win32.WinUser.SWP_NOOWNERZORDER;
-import static com.sun.jna.platform.win32.WinUser.SWP_NOSIZE;
-import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
 import static com.sun.jna.platform.win32.WinUser.WM_DESTROY;
 
 /** Custom callback and hit testing function. */
@@ -49,7 +44,6 @@ class CustomDecorationWindowProcedure implements WinUser.WindowProc {
     this.dimensions = dimensions;
     this.defaultWindowsProcedure = defaultWindowsProcedure;
   }
-
 
   @Override
   public LRESULT callback(HWND hwnd, int uMsg, WPARAM wparam, LPARAM lparam) {

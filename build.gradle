@@ -5,11 +5,17 @@ plugins {
   id "io.franzbecker.gradle-lombok" version "4.0.0"
 }
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
-
-version "${version}"
 project.ext.javaFxPlatform = "${javaFxPlatform}"
+
+allprojects {
+  version "${version}"
+  sourceCompatibility = JavaVersion.VERSION_14
+  targetCompatibility = JavaVersion.VERSION_14
+
+  repositories {
+    jcenter()
+  }
+}
 
 if (javaFxPlatform == "unspecified") {
   switch (OperatingSystem.current()) {
@@ -23,10 +29,6 @@ if (javaFxPlatform == "unspecified") {
       project.ext.javaFxPlatform = "win"
       break
   }
-}
-
-repositories {
-  jcenter()
 }
 
 dependencies {

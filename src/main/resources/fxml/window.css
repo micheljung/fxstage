@@ -1,5 +1,5 @@
 .custom-window {
-  -fx-background-color: #3C3F41;
+  -fx-background-color: transparent;
 }
 
 .custom-window:maximized {

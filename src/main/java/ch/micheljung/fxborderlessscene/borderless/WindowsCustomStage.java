@@ -10,7 +10,6 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinUser;
 import lombok.extern.log4j.Log4j2;
 
-import java.awt.*;
 import java.util.Objects;
 
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
@@ -64,18 +63,18 @@ class WindowsCustomStage extends CustomStage {
           // HACK: When opaque (opacity 255), there is a trail whenever
           // the transparent window is moved. By reducing it to 254,
           // the window is rendered properly.
-          byte opacity = (byte) 254;
-
-          // The color key can be any value except for black (0x0).
-          int color_key = 0x0030c100;
-
-          user32Ex.SetLayeredWindowAttributes(hwnd, color_key, opacity, WinUser.LWA_ALPHA);
+//          byte opacity = (byte) 254;
+//
+//          // The color key can be any value except for black (0x0).
+//          int color_key = 0x0030c100;
+//
+//          user32Ex.SetLayeredWindowAttributes(hwnd, color_key, opacity, WinUser.LWA_ALPHA);
         }
       }
 
       // See https://stackoverflow.com/questions/34414751/dwmextendframeintoclientarea-strange-behaviour-on-windows-10
       if (winVer.getBuild() >= WinVer.WIN_1909_BUILD) {
-        extendFrameIntoClientArea(hwnd, new DwmApi.Margins(-1, -1, -1, -1));
+//        extendFrameIntoClientArea(hwnd, new DwmApi.Margins(-1, -1, -1, -1));
       }
     }
   }
@@ -115,30 +114,32 @@ class WindowsCustomStage extends CustomStage {
   }
 
   private void enableBlurBehind(WinDef.HWND hwnd) {
-    DwmApi.DwmBlurBehind pBlurBehind = new DwmApi.DwmBlurBehind();
-    pBlurBehind.dwFlags = new WinDef.DWORD(DwmApi.DWM_BB_ENABLE | DwmApi.DWM_BB_BLURREGION);
-    pBlurBehind.fEnable = new WinDef.BOOL(true);
-    pBlurBehind.hRgnBlur = new WinDef.HRGN();
+    if (winVer.isWindows7()) {
+      DwmApi.DwmBlurBehind pBlurBehind = new DwmApi.DwmBlurBehind();
+      pBlurBehind.dwFlags = new WinDef.DWORD(DwmApi.DWM_BB_ENABLE | DwmApi.DWM_BB_BLURREGION);
+      pBlurBehind.fEnable = new WinDef.BOOL(true);
+      pBlurBehind.hRgnBlur = new WinDef.HRGN();
 
-    WinNT.HRESULT result = dwmApi.DwmEnableBlurBehindWindow(hwnd, pBlurBehind);
-    if (!Objects.equals(result, WinError.S_OK)) {
-      throw new IllegalStateException("Could not enable blur behind");
-    }
-  }
+      WinNT.HRESULT result = dwmApi.DwmEnableBlurBehindWindow(hwnd, pBlurBehind);
+      if (!Objects.equals(result, WinError.S_OK)) {
+        throw new IllegalStateException("Could not enable blur behind");
+      }
+    } else if (winVer.isWindows10()) {
+      DwmApi.AccentPolicy accent = new DwmApi.AccentPolicy();
+      accent.accentState = AccentState.ACCENT_ENABLE_BLURBEHIND;
+      accent.write();
 
-  private void enableAeroGlass(WinDef.HWND hwnd) {
-    DwmApi.AccentPolicy accent = new DwmApi.AccentPolicy();
-    accent.accentState = AccentState.ACCENT_ENABLE_BLURBEHIND;
-    accent.write();
+      User32Ex.WindowCompositionAttributeData data = new User32Ex.WindowCompositionAttributeData();
+      data.attribute = DwmApi.WindowCompositionAttribute.DWMWA_ACCENT_POLICY;
+      data.data = accent.getPointer();
+      data.sizeOfData = accent.size();
 
-    User32Ex.WindowCompositionAttributeData data = new User32Ex.WindowCompositionAttributeData();
-    data.attribute = DwmApi.WindowCompositionAttribute.DWMWA_ACCENT_POLICY;
-    data.data = accent.getPointer();
-    data.sizeOfData = accent.size();
-
-    WinNT.HRESULT hresult = User32Ex.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
-    if (hresult.intValue() != 1) {
-      throw new IllegalStateException("Could not call SetWindowCompositionAttribute: " + hresult);
+      WinNT.HRESULT hresult = User32Ex.INSTANCE.SetWindowCompositionAttribute(hwnd, data);
+      if (hresult.intValue() != 1) {
+        throw new IllegalStateException("Could not call SetWindowCompositionAttribute: " + hresult);
+      }
+    } else {
+      log.debug("Blur behind is not supported on {}", winVer);
     }
   }
 

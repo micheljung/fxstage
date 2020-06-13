@@ -125,13 +125,16 @@ public abstract class CustomStage {
         throw new IllegalStateException("No scene must be set");
       }
 
-//      Scene scene = sceneFactory.apply(root);
-//      stage.setScene(scene);
-      Scene scene = new Scene(new VBox());
-      scene.setFill(Color.TRANSPARENT);
+      Scene scene = sceneFactory.apply(root);
+      stage.setScene(scene);
+//      Scene scene = new Scene(new VBox());
+//      scene.setFill(Color.TRANSPARENT);
       stage.setScene(scene);
 
       if (useWindows()) {
+        if(blurBehind){
+          stage.initStyle(StageStyle.TRANSPARENT);
+        }
         stage.show();
         new WindowsCustomStage(componentDimensions, alpha, blurBehind, useAcrylic);
       } else {
