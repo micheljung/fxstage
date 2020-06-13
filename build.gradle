@@ -2,6 +2,7 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
   id 'java-library'
+  id "io.franzbecker.gradle-lombok" version "4.0.0"
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -31,9 +32,12 @@ repositories {
 dependencies {
   api "net.java.dev.jna:jna:${jnaVersion}"
   api "net.java.dev.jna:jna-platform:${jnaVersion}"
+  api "org.apache.logging.log4j:log4j-api:${log4j2Version}"
 
   compileOnly "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
+
+  runtimeOnly "org.apache.logging.log4j:log4j-core:${log4j2Version}"
 }

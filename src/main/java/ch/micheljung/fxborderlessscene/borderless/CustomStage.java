@@ -5,11 +5,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.function.Function;
 
 public abstract class CustomStage {
@@ -27,6 +29,7 @@ public abstract class CustomStage {
     private boolean blurBehind;
     private boolean alpha;
     private boolean useAcrylic;
+    private URL fxmlFile;
 
     public Builder(Stage stage) {
       this.stage = stage;
@@ -57,16 +60,28 @@ public abstract class CustomStage {
       return this;
     }
 
+    /**
+     * Sets the node that represents the title bar of the application. This does
+     * <strong>not</strong> add the title to the window but rather use its bounds for hit testing.
+     */
     public Builder titleBar(Node titleBar) {
       componentDimensions.setTitleBar(titleBar);
       return this;
     }
 
+    /**
+     * Sets the node that represents the right menu bar of the application. This does
+     * <strong>not</strong> add the menu bar to the window but rather use its bounds for hit testing.
+     */
     public Builder rightMenuBar(Node rightMenuBar) {
       componentDimensions.setRightMenuBar(rightMenuBar);
       return this;
     }
 
+    /**
+     * If {@code true}, native window behavior (like Aero glass, Aero Snap) will be used instead of a cross-platform
+     * imitation of it. Currently, this is only supported on Windows systems.
+     */
     public Builder useNative(boolean useNative) {
       this.useNative = useNative;
       return this;
@@ -77,6 +92,9 @@ public abstract class CustomStage {
       return this;
     }
 
+    /**
+     * Whether to use "blur behind". Only supported
+     */
     public Builder blurBehind(boolean blurBehind) {
       this.blurBehind = blurBehind;
       return this;
@@ -92,12 +110,10 @@ public abstract class CustomStage {
         fxmlLoader = new FXMLLoader();
       }
 
-      boolean useWindows = Platform.isWindows() && this.useNative;
-
       Parent root;
       WindowController controller;
       try {
-        fxmlLoader.setLocation(CustomStage.class.getResource(getFxmlFile(useWindows)));
+        fxmlLoader.setLocation(getFxmlFile());
         root = fxmlLoader.load();
         controller = fxmlLoader.getController();
       } catch (IOException e) {
@@ -109,11 +125,13 @@ public abstract class CustomStage {
         throw new IllegalStateException("No scene must be set");
       }
 
-      Scene scene = sceneFactory.apply(root);
+//      Scene scene = sceneFactory.apply(root);
+//      stage.setScene(scene);
+      Scene scene = new Scene(new VBox());
       scene.setFill(Color.TRANSPARENT);
       stage.setScene(scene);
 
-      if (useWindows) {
+      if (useWindows()) {
         stage.show();
         new WindowsCustomStage(componentDimensions, alpha, blurBehind, useAcrylic);
       } else {
@@ -123,14 +141,18 @@ public abstract class CustomStage {
       }
     }
 
-    private static String getFxmlFile(boolean useWindows) {
-      String fxmlFile;
-      if (useWindows) {
-        fxmlFile = "/fxml/windows.fxml";
-      } else {
-        fxmlFile = "/fxml/undecorated.fxml";
+    private URL getFxmlFile() {
+      if (fxmlFile != null) {
+        return fxmlFile;
       }
-      return fxmlFile;
+      if (useWindows()) {
+        return CustomStage.class.getResource("/fxml/windows.fxml");
+      }
+      return CustomStage.class.getResource("/fxml/undecorated.fxml");
+    }
+
+    private boolean useWindows() {
+      return Platform.isWindows() && useNative;
     }
   }
 }
