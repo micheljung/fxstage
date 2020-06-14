@@ -4,6 +4,7 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.win32.W32APIOptions;
 
 // TODO remove public
@@ -36,5 +37,32 @@ public interface User32Ex extends User32 {
     public int attribute;
     public Pointer data;
     public int sizeOfData;
+  }
+
+  @Structure.FieldOrder({"rgrc", "lppos"})
+  class NCCALCSIZE_PARAMS extends Structure implements Structure.ByReference {
+    public NCCALCSIZE_PARAMS(Pointer p) {
+      super(p);
+      read();
+    }
+
+    public WinDef.RECT[] rgrc = new WinDef.RECT[3];
+    public WindowPos lppos;
+  }
+
+  @Structure.FieldOrder({"hwndInsertAfter", "hwnd", "x", "y", "cx", "cy", "flags"})
+  class WindowPos extends Structure implements Structure.ByReference {
+    public WindowPos(Pointer p) {
+      super(p);
+      read();
+    }
+
+    public int hwndInsertAfter;
+    public int hwnd;
+    public int x;
+    public int y;
+    public int cx;
+    public int cy;
+    public int flags;
   }
 }

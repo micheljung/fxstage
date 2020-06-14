@@ -4,6 +4,7 @@ import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
 public class WindowController {
@@ -11,7 +12,11 @@ public class WindowController {
   private static final PseudoClass MAXIMIZED_PSEUDO_CLASS = PseudoClass.getPseudoClass("maximized");
 
   public Pane windowRoot;
-  public Node controlBox;
+  public Pane titleBar;
+  public Pane leftMenuBar;
+  public Pane rightMenuBar;
+  public Node icon;
+  public Region controlBox;
   public Button minimizeButton;
   public Button maximizeButton;
   public Button restoreButton;
@@ -55,7 +60,11 @@ public class WindowController {
     return (Stage) windowRoot.getScene().getWindow();
   }
 
-  public Node getControlBox() {
-    return controlBox;
+  public int getFrameResizeBorderThickness() {
+    return 8;
+  }
+
+  public int getShadowInset() {
+    return 0;
   }
 }

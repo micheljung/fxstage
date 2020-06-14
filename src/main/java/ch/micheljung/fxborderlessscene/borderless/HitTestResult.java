@@ -7,6 +7,7 @@ public enum HitTestResult {
   TOPRIGHT(14),
   LEFT(10),
   NOWHERE(0),
+  HTCLIENT(1),
   RIGHT(11),
   BOTTOMLEFT(16),
   BOTTOM(15),

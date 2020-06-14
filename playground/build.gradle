@@ -1,0 +1,26 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'org.openjfx.javafxplugin' version '0.0.8'
+}
+
+repositories {
+  jcenter()
+}
+
+javafx {
+  version = "14"
+  modules = ['javafx.controls', 'javafx.fxml']
+}
+
+sourceCompatibility = JavaVersion.VERSION_14
+targetCompatibility = JavaVersion.VERSION_14
+
+mainClassName = 'org.openjfx.MainApp'
+
+project.ext.jnaVersion = '5.5.0'
+
+dependencies {
+  implementation "net.java.dev.jna:jna:${jnaVersion}"
+  implementation "net.java.dev.jna:jna-platform:${jnaVersion}"
+}

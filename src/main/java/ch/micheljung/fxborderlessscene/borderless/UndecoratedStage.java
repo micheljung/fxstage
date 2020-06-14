@@ -1,6 +1,7 @@
 package ch.micheljung.fxborderlessscene.borderless;
 
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -22,16 +23,22 @@ public class UndecoratedStage extends CustomStage {
   private final Point prevSize;
   private final Point prevPos;
   private final Point mousePosition;
-  private final Rect windowBounds;
+  private final Rect stageBounds;
+  /**
+   * The pane, painted on top of the drop shadow, the represents the visible window. This is the stage size minus the
+   * drop shadow.
+   */
+  private final Parent windowRoot;
+  private final WindowController windowController;
 
   private boolean snapped;
 
   private Stage aeroSnap;
 
-  public UndecoratedStage(Parent contentNode, Stage stage, ComponentDimensions dimensions) {
+  public UndecoratedStage(Stage stage, WindowController windowController) {
     this.stage = stage;
-
-    aeroSnap = new Stage();
+    this.windowRoot = windowController.windowRoot;
+    this.windowController = windowController;
 
     FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/aero-snap-preview.fxml"));
     try {
@@ -40,12 +47,13 @@ public class UndecoratedStage extends CustomStage {
       throw new RuntimeException(e);
     }
 
+    aeroSnap = new Stage();
     aeroSnap.initStyle(StageStyle.TRANSPARENT);
     aeroSnap.initModality(Modality.NONE);
     aeroSnap.setScene(new Scene(loader.getRoot(), Color.TRANSPARENT));
-    aeroSnap.initOwner(stage.getOwner());
+    aeroSnap.initOwner(stage);
 
-    stage.addEventFilter(MouseEvent.MOUSE_MOVED, event -> handleMouseMovement(stage.getScene().getRoot(), dimensions, event));
+    stage.addEventFilter(MouseEvent.MOUSE_MOVED, event -> handleMouseMovement(windowRoot, event));
     stage.maximizedProperty().addListener(observable -> {
       if (stage.isMaximized()) {
         maximize();
@@ -53,22 +61,21 @@ public class UndecoratedStage extends CustomStage {
     });
 
     mousePosition = new Point(0, 0);
-    windowBounds = new Rect(0, 0, 0, 0);
+    stageBounds = new Rect(0, 0, 0, 0);
     prevSize = new Point(0, 0);
     prevPos = new Point(0, 0);
   }
 
-  private void handleMouseMovement(Parent root, ComponentDimensions dimensions, MouseEvent event) {
-    windowBounds.left = (int) stage.getX();
-    windowBounds.top = (int) stage.getY();
-    windowBounds.right = (int) (stage.getX() + stage.getWidth());
-    windowBounds.bottom = (int) (stage.getY() + stage.getHeight());
+  private void handleMouseMovement(Parent root, MouseEvent event) {
+    stageBounds.left = (int) stage.getX();
+    stageBounds.top = (int) stage.getY();
+    stageBounds.right = (int) (stage.getX() + stage.getWidth());
+    stageBounds.bottom = (int) (stage.getY() + stage.getHeight());
 
     mousePosition.x = (int) event.getScreenX();
     mousePosition.y = (int) event.getScreenY();
 
-    HitTestResult hitTestResult = HitTest.hitTest(windowBounds, mousePosition, dimensions);
-
+    HitTestResult hitTestResult = HitTest.hitTest(stageBounds, mousePosition, windowController);
 
     switch (hitTestResult) {
       case TOPLEFT:
@@ -242,10 +249,10 @@ public class UndecoratedStage extends CustomStage {
       }
     });
 
-    // Maximize on double click.
+    // Maximize/restore on double click.
     node.setOnMouseClicked(m -> {
       if ((MouseButton.PRIMARY.equals(m.getButton())) && (m.getClickCount() == 2)) {
-        stage.setMaximized(true);
+        stage.setMaximized(!stage.isMaximized());
       }
     });
 
@@ -319,28 +326,29 @@ public class UndecoratedStage extends CustomStage {
       if (m.isPrimaryButtonDown()) {
         double width = stage.getWidth();
         double height = stage.getHeight();
-
+        Bounds boundsInParent = windowRoot.getBoundsInParent();
+        Bounds boundsInLocal = windowRoot.getBoundsInLocal();
 
         switch (hitTestResult) {
           case TOPLEFT:
           case LEFT:
           case BOTTOMLEFT:
-            double comingWidth = width - m.getScreenX() + stage.getX();
+            double newWidth = width - m.getScreenX() + stage.getX() + (boundsInParent.getMinX() - boundsInLocal.getMinX());
 
-            //Check if it violates minimumWidth
-            if (comingWidth > 0 && comingWidth >= stage.getMinWidth()) {
-              stage.setWidth(stage.getX() - m.getScreenX() + stage.getWidth());
-              stage.setX(m.getScreenX());
+            // Check if it violates minimumWidth
+            if (newWidth > 0 && newWidth >= stage.getMinWidth()) {
+              stage.setWidth(newWidth);
+              stage.setX(m.getScreenX() - (boundsInParent.getMinX() - boundsInLocal.getMinX()));
             }
             break;
 
           case TOPRIGHT:
           case RIGHT:
           case BOTTOMRIGHT:
-            comingWidth = width + m.getX();
+            newWidth = m.getScreenX() - stage.getX() + (boundsInParent.getMinX() - boundsInLocal.getMinX());
 
-            if (comingWidth > 0 && comingWidth >= stage.getMinWidth()) {
-              stage.setWidth(m.getSceneX());
+            if (newWidth > 0 && newWidth >= stage.getMinWidth()) {
+              stage.setWidth(newWidth);
             }
             break;
 
