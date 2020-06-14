@@ -2,8 +2,12 @@ import org.gradle.internal.os.OperatingSystem
 
 plugins {
   id 'java-library'
+  id 'maven-publish'
+  id 'com.jfrog.bintray' version '1.8.5'
   id "io.franzbecker.gradle-lombok" version "4.0.0"
 }
+
+version "${version}"
 
 project.ext.javaFxPlatform = "${javaFxPlatform}"
 
@@ -14,6 +18,25 @@ allprojects {
 
   repositories {
     jcenter()
+  }
+}
+
+java {
+  withSourcesJar()
+  withJavadocJar()
+}
+
+bintray {
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+  publications = ['mavenJava']
+  pkg {
+    repo = 'maven'
+    name = 'fxstage'
+    licenses = ['GPL-3.0']
+    vcsUrl = 'https://github.com/micheljung/fxstage.git'
+    githubRepo = 'micheljung/fxstage'
+    publicDownloadNumbers = true
   }
 }
 
@@ -42,4 +65,38 @@ dependencies {
   compileOnly "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
 
   runtimeOnly "org.apache.logging.log4j:log4j-core:${log4j2Version}"
+}
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      groupId 'ch.micheljung.fxstage'
+      artifactId 'fxstage'
+      version project.version
+      from components.java
+      pom {
+        name = 'FXStage'
+        description = 'Borderless UI for JavaFX'
+        url = 'https://github.com/micheljung/fxstage'
+        licenses {
+          license {
+            name = 'GNU General Public License, Version 3.0'
+            url = 'https://www.gnu.org/licenses/gpl-3.0.html'
+          }
+        }
+        developers {
+          developer {
+            id = 'mj'
+            name = 'Michel Jung'
+            email = 'michel.jung89@gmail.com'
+          }
+        }
+        scm {
+          connection = 'scm:git:https://github.com/micheljung/fxstage.git'
+          developerConnection = 'scm:git:git@github.com:micheljung/fxstage.git'
+          url = 'https://github.com/micheljung/fxstage'
+        }
+      }
+    }
+  }
 }
