@@ -2,7 +2,6 @@ package ch.micheljung.fxborderlessscene.borderless;
 
 import com.sun.jna.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
@@ -99,7 +98,7 @@ public abstract class CustomStage {
       return this;
     }
 
-    public void apply() {
+    public FxWindow apply() {
       if (fxmlLoader == null) {
         fxmlLoader = new FXMLLoader();
       }
@@ -130,6 +129,8 @@ public abstract class CustomStage {
         stage.show();
         new UndecoratedStage(stage, controller);
       }
+
+      return controller;
     }
 
     private URL getFxmlFile() {

@@ -7,20 +7,21 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 
-public class WindowController {
+public class WindowController implements FxWindow {
 
   private static final PseudoClass MAXIMIZED_PSEUDO_CLASS = PseudoClass.getPseudoClass("maximized");
 
-  public Pane windowRoot;
   public Pane titleBar;
   public Pane leftMenuBar;
   public Pane rightMenuBar;
   public Node icon;
+  public Pane windowRoot;
   public Region controlBox;
   public Button minimizeButton;
   public Button maximizeButton;
   public Button restoreButton;
   public Button closeButton;
+  public Pane windowContent;
 
   public void initialize() {
     minimizeButton.managedProperty().bind(minimizeButton.visibleProperty());
@@ -30,14 +31,11 @@ public class WindowController {
 
     restoreButton.visibleProperty().bind(maximizeButton.visibleProperty().not());
 
-    windowRoot.sceneProperty().addListener(observable -> {
+    windowRoot.sceneProperty().addListener(observable ->
       windowRoot.getScene().windowProperty().addListener(observable1 -> {
         maximizeButton.visibleProperty().bind(getStage().maximizedProperty().not());
-        getStage().maximizedProperty().addListener(observable2 -> {
-          getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized());
-        });
-      });
-    });
+        getStage().maximizedProperty().addListener(observable2 -> getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized()));
+      }));
   }
 
   public void onMinimizeButtonClicked() {
@@ -60,11 +58,16 @@ public class WindowController {
     return (Stage) windowRoot.getScene().getWindow();
   }
 
-  public int getFrameResizeBorderThickness() {
+  int getFrameResizeBorderThickness() {
     return 8;
   }
 
-  public int getShadowInset() {
+  int getShadowInset() {
     return 0;
+  }
+
+  @Override
+  public void setContent(Node node) {
+    windowContent.getChildren().setAll(node);
   }
 }

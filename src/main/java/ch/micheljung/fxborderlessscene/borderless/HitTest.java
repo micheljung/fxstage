@@ -1,10 +1,8 @@
 package ch.micheljung.fxborderlessscene.borderless;
 
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import static ch.micheljung.fxborderlessscene.borderless.HitTestResult.BOTTOM;
