@@ -1,0 +1,19 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+mainClassName = 'ch.micheljung.fxborderlessscene.Main'
+
+project.ext.javaFxPlatform = rootProject.ext.javaFxPlatform
+
+dependencies {
+  implementation project(':')
+
+  implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-media:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-web:${javaFxVersion}:${javaFxPlatform}"
+}

@@ -1,0 +1,7 @@
+#transparentRoot {
+  -fx-background-color: transparent;
+  -fx-padding: 10;
+}
+#translucentIndicator {
+  -fx-background-color: rgba(255, 255, 255, 0.1);
+}

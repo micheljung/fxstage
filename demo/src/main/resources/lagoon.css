@@ -1,0 +1,677 @@
+/*
+RESIZING FOR DIFFERENT SCREEN DPI
+-------------------------------
+
+When the screen DPI changes Windows will use a different font size by default.
+The default is 12px and can change to 15px or 18px depending on user
+preference or screen DPI. On Mac the default is 13px and embedded will depend
+on hardware. To make UI controls scale and be the right proportions for each of
+these font sizes we base the padding (which controls size of control) on the
+font size. This is done using the CSS measurement unit of a "em" where
+(1em = font size). The default sizes are based on Windows default of 12px, as
+a quick reference here are common px sizes in em units on windows.
+
+Windows 12px -> em units    -> Mac 13px      |
+----------------------------------------
+     1px     -> 0.083333em  -> 1.08px ~ 2px
+     2px     -> 0.166667em  -> 2.16px ~ 3px
+     3px  = 0.25em
+     4px  = 0.333333em
+     5px  = 0.416667em
+     6px  = 0.5em
+     7px  = 0.583333em
+     8px  = 0.666667em
+     9px  = 0.75em
+    10px  = 0.833333em
+    11px  = 0.916667em
+    12px  = 1em
+
+IMPORTANT: Not all sizes are scaled with em units only padding. All borders and
+background insets are still in pixels. Also any padding where it has to match up
+is being used to size a border should also be in pixels.
+*/
+
+.root {
+  -fx-base: #333333;
+  -fx-background: #212121;
+
+  /* Used for the inside of text boxes, password boxes, lists, trees, and
+   * tables.  See also -fx-text-inner-color, which should be used as the
+   * -fx-text-fill value for text painted on top of backgrounds colored
+   * with -fx-control-inner-background.
+   */
+  -fx-control-inner-background: #333333FF;
+  /* Version of -fx-control-inner-background for alternative rows */
+  -fx-control-inner-background-alt: derive(-fx-control-inner-background, -2%);
+
+  /* Make controls (buttons, thumb, etc.) slightly lighter */
+  -fx-color: derive(-fx-control-inner-background, 10%);
+
+  /* Make controls (buttons, thumb, etc.) even more lighter when selected*/
+  -fx-color-select: derive(-fx-base, 30%);
+
+  /* Text colors depending on background's brightness */
+  -fx-light-text-color: #DCDCDC;
+  -fx-mid-text-color: #454545;
+  -fx-dark-text-color: #141414;
+
+  /* The color to use for -fx-text-fill when text is to be painted on top of
+   * a background filled with the -fx-background color.
+   */
+  -fx-text-background-color: ladder(
+    -fx-background,
+    -fx-light-text-color 49%,
+    -fx-dark-text-color  50%,
+    -fx-dark-text-color  89%,
+    -fx-mid-text-color  90%
+  );
+
+  /* The color to use as -fx-text-fill when painting text on top of
+   * backgrounds filled with -fx-base, -fx-color, and -fx-body-color.
+   */
+  -fx-text-base-color: ladder(
+    -fx-color,
+    -fx-light-text-color 49%,
+    -fx-dark-text-color  50%,
+    -fx-dark-text-color  89%,
+    -fx-mid-text-color  90%
+  );
+
+  /* The color to use as -fx-text-fill when painting text on top of
+   * backgrounds filled with -fx-control-inner-background.
+   */
+  -fx-text-inner-color: ladder(
+    -fx-control-inner-background,
+    -fx-light-text-color 49%,
+    -fx-dark-text-color  50%,
+    -fx-dark-text-color  89%,
+    -fx-mid-text-color  90%
+  );
+
+  /* A bright color for highlighting/accenting objects.  For example: selected
+   * text; selected items in menus, lists, trees, and tables; progress bars */
+  -fx-accent: #2b71d9;
+
+  /* color of non-focused yet selected elements */
+  -fx-selection-bar-non-focused: derive(-fx-accent, -40%);
+
+  /* A little brighter than -fx-color and used to draw boxes around objects such
+   * as progress bars, scroll bars, scroll panes, trees, tables, and lists.
+   */
+  -fx-box-border: derive(-fx-color, 30%);
+
+  DEFAULT_BUTTON_COLOR: -fx-accent;
+  TABLE_HEADER_COLOR: #333333CC;
+  SCROLLBAR_TRACK_COLOR: -fx-control-inner-background;
+  SCROLL_BAR_THUMB_COLOR: derive(SCROLLBAR_TRACK_COLOR, 25%);
+
+  SHADOW_COLOR: #00000099;
+
+  REVIEW_SCORE_5: #117D3C;
+  REVIEW_SCORE_4: #9BD454;
+  REVIEW_SCORE_3: #d4bb5a;
+  REVIEW_SCORE_2: #e9985d;
+  REVIEW_SCORE_1: #ae453b;
+
+  CHART_COLOR_1: #2B71D9;
+  CHART_COLOR_2: #5998F9;
+  CHART_COLOR_3: #3888FF;
+  CHART_COLOR_4: #6398E8;
+  CHART_COLOR_5: #AE3417;
+  CHART_COLOR_6: #E9775C;
+  CHART_COLOR_7: #951448;
+  CHART_COLOR_8: #C84F80;
+  /* Chart Color Palette Semi-Transparent
+   * These are used by charts that need semi transparent versions of the above colors, such as BubbleChart. They
+   * are exactly the same colors as above just with 20% opacity
+   */
+  CHART_COLOR_1_TRANS_20: #2B71D933;
+  CHART_COLOR_2_TRANS_20: #5998F933;
+  CHART_COLOR_3_TRANS_20: #3888FF33;
+  CHART_COLOR_4_TRANS_20: #6398E833;
+  CHART_COLOR_5_TRANS_20: #AE341733;
+  CHART_COLOR_6_TRANS_20: #E9775C33;
+  CHART_COLOR_7_TRANS_20: #95144833;
+  CHART_COLOR_8_TRANS_20: #C84F8033;
+  /* 70% opacity */
+  CHART_COLOR_1_TRANS_70: #2B71D9b3;
+  CHART_COLOR_2_TRANS_70: #5998F9b3;
+  CHART_COLOR_3_TRANS_70: #3888FFb3;
+  CHART_COLOR_4_TRANS_70: #6398E8b3;
+  CHART_COLOR_5_TRANS_70: #AE3417b3;
+  CHART_COLOR_6_TRANS_70: #E9775Cb3;
+  CHART_COLOR_7_TRANS_70: #951448b3;
+  CHART_COLOR_8_TRANS_70: #C84F80b3;
+
+  -fx-body-color: -fx-color;
+}
+
+.fxwindow {
+  -fx-background-color: -fx-background;
+  -fx-background-position: right;
+  -fx-background-size: contain;
+  -fx-background-repeat: round;
+}
+
+/* Remove ugly borders and default background introduced by modena */
+
+.scroll-pane,
+.split-pane,
+.tree-view,
+.list-view,
+.table-view,
+.tree-table-view,
+.tree-table-row-cell,
+.titled-pane,
+.html-editor {
+  -fx-background-color: transparent;
+  -fx-background-insets: 0;
+  -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+  -fx-background: transparent;
+}
+
+.tab-header-background {
+  -fx-background-color: transparent;
+}
+
+.tab-pane:focused > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+  -fx-border-width: 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:top {
+  -fx-padding: 5 20;
+  -fx-border-width: 0 0 4 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+  -fx-background-insets: 0;
+  -fx-font-size: 1.1em;
+  -fx-background-color: -fx-background;
+  -fx-background: #FFFFFF11;
+  -fx-border-color: transparent;
+  -fx-cursor: hand;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:hover {
+  -fx-border-color: -fx-selection-bar-non-focused;
+  -fx-background: #FFFFFF22;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+  -fx-background: #FFFFFF33;
+  -fx-border-color: -fx-accent;
+}
+
+.text-area,
+.text-input {
+  -fx-highlight-fill: -fx-accent;
+  -fx-highlight-text-fill: white;
+  -fx-prompt-text-fill: derive(-fx-text-base-color, -40%);
+  -fx-border-color: -fx-box-border;
+  -fx-border-radius: 3;
+  -fx-padding: 0.583333em;
+  -fx-background: -fx-control-inner-background;
+  -fx-background-color: -fx-background;
+}
+
+.text-input:focused {
+  -fx-background: derive(-fx-control-inner-background, 10%);
+  -fx-color: -fx-accent;
+}
+
+.button,
+.toggle-button,
+.menu-button,
+.combo-box,
+.choice-box,
+.color-picker,
+.combo-box-base {
+  -fx-cursor: hand;
+  -fx-background-color: -fx-background;
+  -fx-background: -fx-body-color;
+  -fx-background-insets: 0;
+}
+
+.combo-box-base > .arrow-button,
+.combo-box-base:editable > .arrow-button {
+  -fx-background-color: null;
+}
+
+.button,
+.toggle-button {
+  -fx-padding: 0.666667em 1.25em;
+}
+
+.toggle-button {
+  -fx-background-radius: 3;
+  -fx-border-radius: 3;
+  -fx-background: -fx-control-inner-background;
+  -fx-border-color: -fx-box-border;
+}
+
+.toggle-button:selected {
+  -fx-background: derive(-fx-control-inner-background, 30%);
+  -fx-border-color: -fx-accent;
+}
+
+.toggle-button:selected:hover {
+  -fx-background: derive(-fx-control-inner-background, 40%);
+  -fx-border-color: derive(-fx-accent, 20%);
+}
+
+.button:hover {
+  -fx-color: -fx-hover-base;
+}
+
+.button:default {
+  -fx-color: DEFAULT_BUTTON_COLOR;
+}
+
+.button:default:hover {
+  -fx-color: derive(DEFAULT_BUTTON_COLOR, 10%);
+}
+
+.button:default:pressed {
+  -fx-color: derive(DEFAULT_BUTTON_COLOR, -10%);
+}
+
+.check-box,
+.radio-button {
+  -fx-cursor: hand;
+}
+
+.check-box > .box > .mark,
+.radio-button > .radio > .dot {
+  -fx-padding: 0;
+  -fx-shape: null;
+}
+
+.check-box > .box,
+.radio-button > .radio {
+  -fx-background-insets: 0;
+  -fx-border-insets: 0;
+  -fx-background-color: null;
+  -fx-border-color: -fx-box-border;
+  -fx-border-radius: 3;
+  -fx-padding: 0.916667em;
+}
+
+.radio-button > .radio,
+.radio-button:focused > .radio {
+  -fx-background-radius: 10em;
+  -fx-border-radius: 10em;
+}
+
+.check-box:selected > .box,
+.radio-button:selected > .radio {
+  -fx-background-color: -fx-background;
+  -fx-background: -fx-accent;
+  -fx-border-color: transparent;
+  -fx-padding: 0.5em 0.333333em 0.5em 0.416667em;
+}
+
+.check-box:indeterminate > .box {
+  -fx-background-color: -fx-background;
+  -fx-background: -fx-accent;
+  -fx-border-color: transparent;
+  -fx-padding: 0.916667em;
+  -fx-border-insets: 0;
+}
+
+.check-box:selected > .box > .mark,
+.radio-button:selected > .radio > .dot {
+  -fx-background-color: -fx-text-background-color;
+  -fx-shape: "M7.629,14.566c0.125,0.125,0.291,0.188,0.456,0.188c0.164,0,0.329-0.062,0.456-0.188l8.219-8.221c0.252-0.252,0.252-0.659,0-0.911c-0.252-0.252-0.659-0.252-0.911,0l-7.764,7.763L4.152,9.267c-0.252-0.251-0.66-0.251-0.911,0c-0.252,0.252-0.252,0.66,0,0.911L7.629,14.566z";
+  -fx-padding: 0.416667em 0.583333em 0.416667em 0.5em;
+}
+
+.check-box:indeterminate > .box > .mark {
+  -fx-background-color: -fx-text-background-color;
+  -fx-shape: "M0,0H10V2H0Z";
+}
+
+.check-box:selected:hover > .box,
+.check-box:indeterminate:hover > .box,
+.radio-button:selected:hover > .radio,
+.radio-button:indeterminate:hover > .radio {
+  -fx-background: derive(-fx-accent, 10%);
+}
+
+.check-box:selected:pressed > .box,
+.check-box:indeterminate:pressed > .box,
+.radio-button:selected:pressed > .radio,
+.radio-button:indeterminate:pressed > .radio {
+  -fx-background: derive(-fx-accent, -10%);
+}
+
+.combo-box,
+.choice-box,
+.color-picker {
+  -fx-padding: 0.25em 0.5em;
+  -fx-border-color: -fx-box-border;
+  -fx-border-radius: 3;
+}
+
+.choice-box:showing,
+.combo-box:showing,
+.combo-box-base:showing {
+  -fx-background: derive(-fx-base, 20%);
+  -fx-background-radius: 3 3 0 0;
+  -fx-border-color: -fx-accent;
+  -fx-border-width: 1 1 0 1;
+  -fx-border-radius: 3 3 0 0;
+}
+
+.choice-box:showing {
+  /* A choice-box menu is not below the choice-box as the combo-box' popup. */
+  -fx-border-radius: 3;
+  -fx-background-radius: 3;
+  -fx-border-width: 1;
+}
+
+.combo-box:editable {
+  -fx-background: transparent;
+  -fx-border-width: 1;
+  -fx-border-color: -fx-box-border;
+  -fx-border-radius: 3;
+}
+
+.combo-box:editable:focused {
+  -fx-border-color: -fx-accent;
+}
+
+.combo-box:editable > .text-field {
+  -fx-border-width: 0;
+  -fx-background-insets: 0;
+}
+
+.combo-box:editable > .arrow-button {
+  -fx-background-color: -fx-background;
+  -fx-background: -fx-control-inner-background;
+  -fx-border-insets: 0;
+  -fx-background-insets: 0;
+}
+
+.combo-box:editable:focused > .arrow-button {
+  -fx-background: derive(-fx-control-inner-background, 10%);
+}
+
+.combo-box-popup > .list-view {
+  -fx-background: -fx-base;
+  -fx-background-color: -fx-background;
+  -fx-background-radius: 0 0 3 3;
+  -fx-cursor: hand;
+  -fx-effect: null;
+  -fx-border-color: -fx-accent;
+  -fx-border-width: 0 1 1 1;
+  -fx-border-radius: 0 0 3 3;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell {
+  -fx-background-color: null;
+  -fx-padding: 0.583333em 1.083333em;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:hover {
+  -fx-background: -fx-selection-bar-non-focused;
+  -fx-background-color: -fx-background;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected {
+  -fx-background-insets: 0;
+  -fx-background: -fx-accent;
+  -fx-background-color: -fx-background;
+}
+
+.combo-box-popup > .list-view > .virtual-flow > .clipped-container > .sheet > .list-cell:filled:selected:hover {
+  -fx-background: -fx-accent;
+  -fx-background-color: -fx-background;
+}
+
+.combo-box:editable {
+  -fx-padding: 0;
+}
+
+.date-picker {
+  -fx-border-color: -fx-box-border;
+  -fx-border-radius: 3;
+}
+
+.date-picker .text-field {
+  -fx-background-color: null;
+}
+
+.date-picker:focused {
+  -fx-border-color: -fx-accent;
+}
+
+.date-picker > .date-picker-display-node {
+  -fx-border-width: 0;
+}
+
+.date-picker-popup > * > .day-cell:hover {
+  -fx-cursor: hand;
+}
+
+.date-picker-popup > * > .week-number-cell {
+  -fx-text-fill: -fx-text-base-color;
+}
+
+.date-picker-popup > * > .previous-month,
+.date-picker-popup > * > .next-month {
+  -fx-background: derive(-fx-control-inner-background, -30%);
+}
+
+.date-picker-popup > * > .previous-month:hover,
+.date-picker-popup > * > .next-month:hover {
+  -fx-background: -fx-selection-bar-non-focused;
+}
+
+.date-picker-popup > * > .today {
+  -fx-background-color: derive(-fx-control-inner-background, 60%);
+  -fx-background-insets: 0;
+}
+
+.text-area {
+  -fx-padding: 0;
+}
+
+.text-area > .scroll-pane {
+  -fx-background-color: null;
+}
+
+.text-area .content {
+  -fx-background-color: null;
+}
+
+.text-area:focused .content {
+  -fx-background-color: null;
+}
+
+.progress-bar {
+  -fx-indeterminate-bar-length: 60;
+  -fx-indeterminate-bar-escape: true;
+  -fx-indeterminate-bar-flip: false;
+  -fx-indeterminate-bar-animation-time: 1.5;
+}
+
+.progress-bar > .bar {
+  -fx-background-color: -fx-accent;
+  -fx-background-insets: 2;
+  -fx-background-radius: 1;
+  -fx-padding: 0.333333em;
+}
+
+.progress-bar > .track {
+  -fx-background-color: -fx-control-inner-background;
+  -fx-background-insets: 0;
+  -fx-background-radius: 2;
+}
+
+.context-menu {
+  -fx-background-color: -fx-background;
+  -fx-background: -fx-base;
+  -fx-color: -fx-base;
+  -fx-border-color: -fx-box-border;
+  -fx-min-width: 16em;
+}
+
+.split-pane > .split-pane-divider {
+  -fx-padding: 0 1 0 0;
+}
+
+.table-view > .column-header-background {
+  -fx-background: TABLE_HEADER_COLOR;
+  -fx-background-color: -fx-background;
+}
+
+/* TODO I think those can be removed
+.tree-table-view.invisible-selection .tree-table-row-cell {
+  -fx-background-color: transparent;
+}
+
+.tree-table-view.invisible-selection .tree-table-row-cell:hover {
+  -fx-background-color: darkmagenta;
+}
+*/
+
+.table-view, .tree-table-view {
+  -fx-background: transparent;
+  -fx-background-color: -fx-background;
+  -fx-color: derive(-fx-base, -30%);
+}
+
+/* The column header row is made up of a number of column-header, one for each
+   TableColumn, and a 'filler' area that extends from the right-most column
+   to the edge of the tableview, or up to the 'column control' button. */
+.table-view .filler, .tree-table-view .filler, .table-view .column-header,
+.tree-table-view .column-header {
+  -fx-size: 3em;
+  -fx-background-color: -fx-background;
+  -fx-background: transparent;
+  -fx-padding: 0 0 0 1em;
+}
+
+.table-view .column-header .label, .table-view .filler .label,
+.table-view .column-drag-header .label, .tree-table-view .column-header .label,
+.tree-table-view .filler .label, .tree-table-view .column-drag-header .label {
+  -fx-alignment: CENTER_LEFT;
+}
+
+.table-row-cell, .tree-table-row-cell {
+  -fx-cell-size: 2.5em;
+}
+
+.table-row-cell {
+  -fx-background-color: -fx-background;
+  -fx-background: transparent;
+  -fx-border-color: -fx-table-cell-border-color;
+  -fx-border-width: 0 0 1 0;
+}
+
+.table-row-cell:selected, .tree-table-row-cell:selected {
+  -fx-background-color: -fx-selection-bar-non-focused;
+}
+
+.table-cell {
+  -fx-padding: 0 0 0 0.833333em;
+  -fx-alignment: center-left;
+  -fx-border-width: 0;
+}
+
+.scroll-bar {
+  -fx-background-color: SCROLLBAR_TRACK_COLOR;
+  -fx-background-radius: 3;
+}
+
+.scroll-bar:vertical > .thumb,
+.scroll-bar:horizontal > .thumb {
+  -fx-background-insets: 2;
+  -fx-background-radius: 2;
+  -fx-background-color: -fx-background;
+  -fx-background: SCROLL_BAR_THUMB_COLOR;
+}
+
+/* The whole scroll bar width seems to depend on the button sizes only. */
+.scroll-bar:vertical > .increment-button {
+  -fx-padding: 0 0.416667em;
+}
+
+.scroll-bar:horizontal > .increment-button {
+  -fx-padding: 0.416667em 0;
+}
+
+.scroll-bar > .decrement-button,
+.scroll-bar > .increment-button > .increment-arrow,
+.scroll-bar > .decrement-button > .decrement-arrow {
+  visibility: hidden;
+  -fx-padding: 0;
+}
+
+.pagination {
+  -fx-page-information-visible: false;
+}
+
+.pagination > .pagination-control > .control-box {
+  -fx-font-size: 1.2em;
+  -fx-spacing: 0;
+}
+
+.pagination > .pagination-control > .control-box > *,
+.pagination.bullet > .pagination-control > .control-box > * {
+  -fx-background: -fx-base;
+  -fx-background-color: -fx-box-border, -fx-background;
+}
+
+.pagination > .pagination-control > .control-box > * {
+  -fx-background-insets: 0, 1;
+  -fx-padding: 0.166667em 0.333em 0.25em 0.333em;
+  -fx-min-width: 3em;
+  -fx-min-height: 3em;
+  -fx-border-width: 0;
+}
+
+.pagination.bullet > .pagination-control > .control-box > * {
+  -fx-background-radius: 4em;
+  -fx-background-insets: 4, 5;
+  -fx-min-width: 2em;
+  -fx-min-height: 2em;
+}
+
+.pagination > .pagination-control > .control-box > *:hover,
+.pagination.bullet > .pagination-control > .control-box > *:hover {
+  -fx-background: -fx-hover-base;
+}
+
+.pagination.bullet > .pagination-control > .control-box > .left-arrow-button,
+.pagination.bullet > .pagination-control > .control-box > .right-arrow-button {
+  -fx-background-radius: 10em;
+  -fx-min-width: 2.5em;
+  -fx-min-height: 2.5em;
+  -fx-background-insets: 2;
+}
+
+.pagination.bullet > .pagination-control > .control-box > .left-arrow-button {
+  -fx-padding: 0em 0.25em 0.083em 0.083em;
+}
+
+.pagination.bullet > .pagination-control > .control-box > .right-arrow-button {
+  -fx-padding: 0em 0.083em 0.083em 0.25em;;
+}
+
+/* I don't know what pushes the arrow down on hover, so I just compensate for it. */
+.pagination.bullet > .pagination-control > .control-box > .left-arrow-button:hover {
+  -fx-padding: 0em 0.25em 0.333333em 0.083em;
+}
+
+.pagination.bullet > .pagination-control > .control-box > .right-arrow-button:hover {
+  -fx-padding: 0em 0.083em 0.333333em 0.25em;
+}
+
+.pagination > .pagination-control > .control-box > .left-arrow-button:hover,
+.pagination > .pagination-control > .control-box > .right-arrow-button:hover {
+  -fx-padding: 0 0 0.333333em 0;
+}

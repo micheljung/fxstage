@@ -1,0 +1,5 @@
+rootProject.name = 'fxstage'
+include 'demo'
+include 'playground'
+include 'theme-lagoon'
+

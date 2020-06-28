@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+
+<StackPane fx:id="backdrop" alignment="TOP_LEFT" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="ch.micheljung.fxwindow.CustomWindowController">
+  <StackPane fx:id="windowRoot" alignment="TOP_LEFT" minHeight="0.0" minWidth="0.0" styleClass="fxwindow">
+    <children>
+      <AnchorPane fx:id="windowContent" minHeight="0.0" minWidth="0.0" />
+      <HBox fx:id="controlBox" alignment="TOP_RIGHT" maxHeight="-Infinity" maxWidth="-Infinity" StackPane.alignment="TOP_RIGHT">
+        <Button fx:id="minimizeButton" focusTraversable="false" onAction="#onMinimizeButtonClicked">
+          <styleClass>
+            <String fx:value="window-button" />
+            <String fx:value="minimize-button" />
+          </styleClass>
+          <graphic>
+            <StackPane>
+              <Region styleClass="icon" />
+            </StackPane>
+          </graphic>
+        </Button>
+        <Button fx:id="maximizeButton" focusTraversable="false" onAction="#onMaximiseButtonClicked">
+          <styleClass>
+            <String fx:value="window-button" />
+            <String fx:value="maximize-button" />
+          </styleClass>
+          <graphic>
+            <StackPane>
+              <Region styleClass="icon" />
+            </StackPane>
+          </graphic>
+        </Button>
+        <Button fx:id="restoreButton" focusTraversable="false" onAction="#onRestoreButtonClicked">
+          <styleClass>
+            <String fx:value="window-button" />
+            <String fx:value="restore-button" />
+          </styleClass>
+          <graphic>
+            <StackPane>
+              <Region styleClass="icon" />
+            </StackPane>
+          </graphic>
+        </Button>
+        <Button fx:id="closeButton" focusTraversable="false" onAction="#onCloseButtonClicked">
+          <styleClass>
+            <String fx:value="window-button" />
+            <String fx:value="close-button" />
+          </styleClass>
+          <graphic>
+            <StackPane>
+              <Region styleClass="icon" />
+            </StackPane>
+          </graphic>
+        </Button>
+      </HBox>
+    </children>
+  </StackPane>
+</StackPane>

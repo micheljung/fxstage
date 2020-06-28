@@ -1,0 +1,11 @@
+out/
+.idea/*
+!.idea/runConfigurations
+*.jar
+hs_err_pid*
+.gradle
+build/
+gradle-app.setting
+
+!gradle-wrapper.jar
+
