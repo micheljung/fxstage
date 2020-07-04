@@ -1,6 +1,7 @@
 package ch.micheljung.fxborderlessscene;
 
 import ch.micheljung.fxwindow.FxStage;
+import ch.micheljung.waitomo.WaitomoTheme;
 import javafx.application.Application;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -18,6 +19,7 @@ public class Main {
       FxStage.configure(primaryStage)
         .withContent(new StackPane(new Label("FxStage")))
         .apply();
+      WaitomoTheme.apply(primaryStage.getScene());
     }
   }
 }

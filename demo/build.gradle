@@ -9,6 +9,7 @@ project.ext.javaFxPlatform = rootProject.ext.javaFxPlatform
 
 dependencies {
   implementation project(':')
+  implementation 'ch.micheljung.waitomo:jfx-waitomo-theme:0.2.0'
 
   implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
   implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
