@@ -36,10 +36,17 @@ public class WindowController implements FxStage {
 
     restoreButton.visibleProperty().bind(maximizeButton.visibleProperty().not());
 
-    windowRoot.sceneProperty().addListener(observable ->
-      windowRoot.getScene().windowProperty().addListener(observable1 -> {
+    windowRoot.sceneProperty().addListener(sceneProperty ->
+      windowRoot.getScene().windowProperty().addListener(windowProperty -> {
         maximizeButton.visibleProperty().bind(getStage().maximizedProperty().not());
-        getStage().maximizedProperty().addListener(observable2 -> getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized()));
+        getStage().maximizedProperty().addListener(maximizedProperty -> getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized()));
+        getStage().iconifiedProperty().addListener((observable, oldValue, newValue) -> {
+          if (!newValue) {
+            // Workaround for minimize button not losing its "pressed" status
+            maximizeButton.arm();
+            maximizeButton.disarm();
+          }
+        });
       }));
   }
 

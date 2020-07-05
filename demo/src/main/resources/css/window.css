@@ -1,0 +1,13 @@
+.window-button.button:hover {
+  -fx-background-color: #FFFFFF11;
+  -icon-paint: white;
+}
+
+.window-button.button:pressed {
+  -fx-background-color: #FFFFFF22;
+}
+
+.close-button.button:hover {
+  -fx-background-color: #E81123;
+  -icon-paint: white;
+}

@@ -34,6 +34,7 @@ public class UndecoratedStage {
   public static final int DEFAULT_FRAME_DRAG_HEIGHT = 30;
 
   private final Stage stage;
+
   private final Point prevSize;
   private final Point prevPos;
   private final Point mousePosition;
@@ -85,6 +86,10 @@ public class UndecoratedStage {
     stageBounds = new Rect(0, 0, 0, 0);
     prevSize = new Point(0, 0);
     prevPos = new Point(0, 0);
+  }
+
+  public static void configure(Stage stage, WindowController controller, Features features) {
+    new UndecoratedStage(stage, controller, features);
   }
 
   private void handleMouseMovement(Parent root, MouseEvent event) {

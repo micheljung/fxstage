@@ -7,19 +7,15 @@ import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinDef.HWND;
-import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import javafx.application.Application;
 import javafx.scene.Scene;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.lang.reflect.Method;
-
-import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 
 public class CustomWndProc {
 

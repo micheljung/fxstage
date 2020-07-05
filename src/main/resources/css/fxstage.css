@@ -23,6 +23,7 @@
 
 .window-button.button:hover {
   -fx-background-color: #00000011;
+  -icon-paint: white;
 }
 
 .window-button.button:pressed {

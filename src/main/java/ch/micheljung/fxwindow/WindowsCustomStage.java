@@ -6,6 +6,7 @@ import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinError;
 import com.sun.jna.platform.win32.WinNT;
+import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
 
 import java.util.Objects;
@@ -23,6 +24,7 @@ class WindowsCustomStage {
   private static final User32Ex user32Ex = User32Ex.INSTANCE;
   private static final DwmApi dwmApi = DwmApi.INSTANCE;
   private static final WinVer winVer;
+
   static {
     WinNT.OSVERSIONINFO osVersionInfo = new WinNT.OSVERSIONINFO();
     if (!Kernel32.INSTANCE.GetVersionEx(osVersionInfo)) {
@@ -32,12 +34,12 @@ class WindowsCustomStage {
     winVer = new WinVer(osVersionInfo);
   }
 
-  WindowsCustomStage(WindowController windowController, Features features) {
+  public static void configure(WindowController controller, Features features) {
     WinDef.HWND hwnd = getWindowPointer();
 
     BaseTSD.LONG_PTR defaultWindowsProcedure = user32Ex.GetWindowLongPtr(hwnd, GWL_WNDPROC);
 
-    user32Ex.SetWindowLongPtr(hwnd, GWL_WNDPROC, new DecorationWindowProcedure(windowController, defaultWindowsProcedure, features));
+    user32Ex.SetWindowLongPtr(hwnd, GWL_WNDPROC, new DecorationWindowProcedure(controller, defaultWindowsProcedure, features));
 
     user32Ex.SetWindowPos(hwnd, hwnd, 0, 0, 0, 0,
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_NOOWNERZORDER);
@@ -45,15 +47,19 @@ class WindowsCustomStage {
     if (features.isUseBlurBehind()) {
       enableBlurBehind(hwnd);
     }
+    Stage stage = controller.getStage();
+    // Trigger Window.synthesizeViewMoveEvent() to recalculate the stage's position on the window.
+    stage.setResizable(!stage.isResizable());
+    stage.setResizable(!stage.isResizable());
   }
 
-  private WinDef.HWND getWindowPointer() {
+  private static WinDef.HWND getWindowPointer() {
     WinDef.HWND hwnd = new WinDef.HWND();
     hwnd.setPointer(User32.INSTANCE.GetActiveWindow().getPointer());
     return hwnd;
   }
 
-  private void enableBlurBehind(WinDef.HWND hwnd) {
+  private static void enableBlurBehind(WinDef.HWND hwnd) {
     if (winVer.isWindows7()) {
       DwmApi.DwmBlurBehind pBlurBehind = new DwmApi.DwmBlurBehind();
       pBlurBehind.dwFlags = new WinDef.DWORD(DwmApi.DWM_BB_ENABLE | DwmApi.DWM_BB_BLURREGION);

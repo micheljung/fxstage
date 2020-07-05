@@ -5,12 +5,10 @@ import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
-import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.stage.Screen;
+import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,7 +174,9 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       }
     }
 
-    if (result == HitTestResult.HTCLIENT && mouse.y <= top + frameDragHeight) {
+    // Maximized, this is a negative value, otherwise this is 0
+    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -resizeBorderThickness : 0;
+    if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
       result = HitTestResult.CAPTION;
     }
 
@@ -199,7 +199,9 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     if (bounds == null) {
       return false;
     }
-    // Compensate for JavaFX's rounding errors; minY could be e.g. 0.00000000000003
-    return bounds.contains(mouse.x + .1, mouse.y + .1);
+
+    // Can't use bounds.contains() because it deals with doubles not integers, which causes rounding issues
+    return mouse.x >= bounds.getMinX() && mouse.x <= bounds.getMaxX()
+      && mouse.y >= bounds.getMinY() && mouse.y <= bounds.getMaxY();
   }
 }

@@ -1,5 +1,7 @@
 # FxStage
 
+[ ![Download](https://api.bintray.com/packages/micheljung/maven/fxstage/images/download.svg) ](https://bintray.com/micheljung/maven/fxstage/_latestVersion)
+
 A small library to create borderless JavaFX stages with native window behaviour.
 
 ## Features
@@ -21,13 +23,8 @@ A small library to create borderless JavaFX stages with native window behaviour.
 
 Convert an existing stage:
 
-```java
-class Test {
-    FxStage fxWindow = FxStage.configure(stage)
-      .useNative(true)
-      .allowTopResize(true)
-      .apply();
-}
+```
+FxStage.configure(stage).apply();
 ```
 
 ## Get It Now
@@ -35,7 +32,13 @@ class Test {
 Get it via https://bintray.com/micheljung/maven/fxstage/
 
 ```
-implementation 'ch.micheljung.fxstage:fxstage:0.4.0'
+repositories {
+  jcenter()
+}
+
+dependencies {
+  implementation 'ch.micheljung.fxstage:fxstage:0.6.0'
+}
 ```
 
 ## Important
@@ -43,3 +46,4 @@ implementation 'ch.micheljung.fxstage:fxstage:0.4.0'
 * The API is not yet polished and might change in future
 * Cross-platform Windows 10 imitation is yet buggy
 * Requires Java 11+
+*

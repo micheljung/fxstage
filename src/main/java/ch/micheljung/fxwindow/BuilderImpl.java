@@ -1,6 +1,7 @@
 package ch.micheljung.fxwindow;
 
 import com.sun.jna.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -10,6 +11,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.net.URL;
@@ -170,15 +172,22 @@ class BuilderImpl implements StageCreator {
 
     boolean useWindowsNative = useWindows();
     if (useWindowsNative) {
-      stage.show();
-      new WindowsCustomStage(controller, features);
-      stage.setResizable(!stage.isResizable());
-      stage.setResizable(!stage.isResizable());
+      if (stage.isShowing()) {
+        WindowsCustomStage.configure(controller, features);
+      } else {
+        EventHandler<WindowEvent> currentOnShown = stage.getOnShown();
+        stage.setOnShown(event -> {
+          stage.setOnShown(currentOnShown);
+          if (currentOnShown != null) {
+            currentOnShown.handle(event);
+          }
+          WindowsCustomStage.configure(controller, features);
+        });
+      }
     } else {
       stage.getScene().setFill(Color.TRANSPARENT);
       stage.initStyle(StageStyle.TRANSPARENT);
-      stage.show();
-      new UndecoratedStage(stage, controller, features);
+      UndecoratedStage.configure(stage, controller, features);
     }
 
     if (applyStyleSheet) {

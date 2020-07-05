@@ -14,11 +14,8 @@ import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
@@ -34,8 +31,6 @@ import static com.sun.jna.platform.win32.WinUser.SWP_NOMOVE;
 import static com.sun.jna.platform.win32.WinUser.SWP_NOSIZE;
 import static com.sun.jna.platform.win32.WinUser.SWP_NOZORDER;
 import static com.sun.jna.platform.win32.WinUser.SW_SHOW;
-import static com.sun.jna.platform.win32.WinUser.WS_BORDER;
-import static com.sun.jna.platform.win32.WinUser.WS_CAPTION;
 import static com.sun.jna.platform.win32.WinUser.WS_OVERLAPPEDWINDOW;
 
 public class TransparentStage {
