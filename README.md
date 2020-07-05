@@ -46,4 +46,3 @@ dependencies {
 * The API is not yet polished and might change in future
 * Cross-platform Windows 10 imitation is yet buggy
 * Requires Java 11+
-*
