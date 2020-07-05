@@ -12,7 +12,7 @@ A small library to create borderless JavaFX stages with native window behaviour.
   * Window resizing
   * Aero Snap
 * Fallback to cross-platform Windows 10 imitation
-* Non-invasive
+* Minimally-invasive
 * Fully customizable
 
 ## Screenshot
