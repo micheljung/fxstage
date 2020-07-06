@@ -1,6 +1,8 @@
 package ch.micheljung.fxwindow;
 
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -8,6 +10,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+
+import java.util.List;
 
 /** Not intended to be used by the library user. */
 public class WindowController implements FxStage {
@@ -22,10 +26,10 @@ public class WindowController implements FxStage {
   public Button closeButton;
   public AnchorPane windowContent;
 
+  private final ObservableList<Node> nonCaptionNodes = FXCollections.observableArrayList();
+
   // Those are not part of the FX window, but set by the user
   private Region titleBar;
-  private Node leftMenu;
-  private Node rightMenu;
   private Node icon;
 
   public void initialize() {
@@ -88,38 +92,10 @@ public class WindowController implements FxStage {
     return this;
   }
 
-  @Override
-  public FxStage setTitleBar(Region titleBar) {
-    this.titleBar = titleBar;
-    return this;
-  }
 
   @Override
-  public FxStage setLeftMenu(Node leftMenu) {
-    this.leftMenu = leftMenu;
-    return this;
-  }
-
-  @Override
-  public FxStage setRightMenu(Node rightMenu) {
-    this.rightMenu = rightMenu;
-    return this;
-  }
-
-  @Override
-  public FxStage setIcon(Node icon) {
-    this.icon = leftMenu;
-    return this;
-  }
-
-  @Override
-  public Node getLeftMenu() {
-    return leftMenu;
-  }
-
-  @Override
-  public Node getRightMenu() {
-    return rightMenu;
+  public ObservableList<Node> getNonCaptionNodes() {
+    return nonCaptionNodes;
   }
 
   @Override
@@ -128,8 +104,20 @@ public class WindowController implements FxStage {
   }
 
   @Override
+  public FxStage setTitleBar(Region titleBar) {
+    this.titleBar = titleBar;
+    return this;
+  }
+
+  @Override
   public Node getIcon() {
     return icon;
+  }
+
+  @Override
+  public FxStage setIcon(Node icon) {
+    this.icon = icon;
+    return this;
   }
 
   public void setAllowMinimize(boolean allowMinimize) {

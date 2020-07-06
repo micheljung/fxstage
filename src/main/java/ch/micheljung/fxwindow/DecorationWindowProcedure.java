@@ -149,8 +149,6 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     Region controlBox = controller.controlBox;
     Region titleBar = controller.getTitleBar();
 
-    Node leftMenuBar = controller.getLeftMenu();
-    Node rightMenuBar = controller.getRightMenu();
     Node icon = controller.getIcon();
 
     int top = window.top;
@@ -183,8 +181,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     if (result != HitTestResult.HTCLIENT && (
       isMouseOn(mouse, controlBox)
         || isMouseOn(mouse, icon)
-        || isMouseOn(mouse, leftMenuBar)
-        || isMouseOn(mouse, rightMenuBar))) {
+        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node)))) {
       return HitTestResult.HTCLIENT;
     }
 
