@@ -121,8 +121,6 @@ public class WindowController implements FxStage {
   }
 
   public void setAllowMinimize(boolean allowMinimize) {
-    if (!allowMinimize) {
-      minimizeButton.setDisable(false);
-    }
+    minimizeButton.setDisable(!allowMinimize);
   }
 }
