@@ -80,10 +80,14 @@ public class WindowController implements FxStage {
 
   @Override
   public FxStage setContent(Region node) {
+    return setContent(node, getStage());
+  }
+
+  FxStage setContent(Region node, Stage stage) {
     windowContent.getChildren().setAll(node);
 
-    getStage().minWidthProperty().bind(Bindings.createDoubleBinding(() -> Math.max(node.getMinWidth(), 10), node.minWidthProperty()));
-    getStage().minHeightProperty().bind(Bindings.createDoubleBinding(() -> Math.max(node.getMinHeight(), 10), node.minHeightProperty()));
+    stage.minWidthProperty().bind(Bindings.createDoubleBinding(() -> Math.max(node.getMinWidth(), 10), node.minWidthProperty()));
+    stage.minHeightProperty().bind(Bindings.createDoubleBinding(() -> Math.max(node.getMinHeight(), 10), node.minHeightProperty()));
 
     AnchorPane.setBottomAnchor(node, 0d);
     AnchorPane.setLeftAnchor(node, 0d);

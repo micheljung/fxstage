@@ -213,7 +213,7 @@ class BuilderImpl implements StageCreator {
 
     if (stage.getScene() != null) {
       Region currentRoot = (Region) stage.getScene().getRoot();
-      controller.setContent(currentRoot);
+      controller.setContent(currentRoot, stage);
     } else {
       Scene scene = sceneFactory.apply(newRoot);
       stage.setScene(scene);
