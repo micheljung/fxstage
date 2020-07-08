@@ -555,7 +555,7 @@ public class UndecoratedStage {
   }
 
   private static boolean isMouseOn(Point mouse, Node node) {
-    if (node == null) {
+    if (node == null || !node.isManaged()) {
       return false;
     }
     Bounds bounds = node.localToScreen(node.getBoundsInLocal());
