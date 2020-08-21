@@ -8,6 +8,7 @@ import com.sun.jna.platform.win32.WinUser;
 import javafx.geometry.Bounds;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -154,14 +155,14 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     int top = window.top;
     int left = window.left;
     int right = window.right;
-    double frameDragHeight = titleBar != null
+    double frameDragHeight = (titleBar != null
       ? titleBar.getHeight() : controlBox != null
-      ? controlBox.getHeight() : DEFAULT_FRAME_DRAG_HEIGHT;
+      ? controlBox.getHeight() : DEFAULT_FRAME_DRAG_HEIGHT) * Screen.getPrimary().getOutputScaleY();
 
     HitTestResult result = HitTestResult.HTCLIENT;
 
-    int resizeBorderThickness = controller.getResizeBorderThickness();
-    int topResizeBorderThickness = resizeBorderThickness - 3;
+    int resizeBorderThickness = (int) (controller.getResizeBorderThickness() * Screen.getPrimary().getOutputScaleX());
+    int topResizeBorderThickness = (int) (resizeBorderThickness - 3 * Screen.getPrimary().getOutputScaleX());
     if (mouse.y < top + topResizeBorderThickness) {
       if (mouse.x < left + resizeBorderThickness) {
         result = HitTestResult.TOPLEFT;
@@ -172,23 +173,23 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       }
     }
 
-    // Maximized, this is a negative value, otherwise this is 0
-    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -resizeBorderThickness : 0;
+    // Maximized, 'top' is a negative value which needs to be compensated here
+    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -top : 0;
     if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
       result = HitTestResult.CAPTION;
     }
 
     if (result != HitTestResult.HTCLIENT && (
-      isMouseOn(mouse, controlBox)
-        || isMouseOn(mouse, icon)
-        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node)))) {
+      isMouseOn(mouse, controlBox, topInset)
+        || isMouseOn(mouse, icon, topInset)
+        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node, topInset)))) {
       return HitTestResult.HTCLIENT;
     }
 
     return result;
   }
 
-  private static boolean isMouseOn(Point mouse, Node node) {
+  private static boolean isMouseOn(Point mouse, Node node, int topInset) {
     if (node == null || !node.isManaged()) {
       return false;
     }
@@ -197,8 +198,12 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       return false;
     }
 
+    double scaledTopInset = topInset / Screen.getPrimary().getOutputScaleY();
+    double scaledMouseX = mouse.x / Screen.getPrimary().getOutputScaleX();
+    double scaledMouseY = mouse.y / Screen.getPrimary().getOutputScaleY();
+
     // Can't use bounds.contains() because it deals with doubles not integers, which causes rounding issues
-    return mouse.x >= bounds.getMinX() && mouse.x <= bounds.getMaxX()
-      && mouse.y >= bounds.getMinY() && mouse.y <= bounds.getMaxY();
+    return scaledMouseX >= bounds.getMinX() && scaledMouseX <= bounds.getMaxX()
+      && scaledMouseY >= bounds.getMinY() + scaledTopInset && scaledMouseY <= bounds.getMaxY() + scaledTopInset;
   }
 }
