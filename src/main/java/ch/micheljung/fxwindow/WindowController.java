@@ -10,10 +10,12 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
+import javafx.stage.Window;
+import javafx.stage.WindowEvent;
 
-import java.util.List;
-
-/** Not intended to be used by the library user. */
+/**
+ * Not intended to be used by the library user.
+ */
 public class WindowController implements FxStage {
 
   private static final PseudoClass MAXIMIZED_PSEUDO_CLASS = PseudoClass.getPseudoClass("maximized");
@@ -67,7 +69,8 @@ public class WindowController implements FxStage {
   }
 
   public void onCloseButtonClicked() {
-    getStage().close();
+    Window window = getStage();
+    window.fireEvent(new WindowEvent(window, WindowEvent.WINDOW_CLOSE_REQUEST));
   }
 
   public Stage getStage() {
