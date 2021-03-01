@@ -46,3 +46,7 @@ dependencies {
 * The API is not yet polished and might change in future
 * Cross-platform Windows 10 imitation is yet buggy
 * Requires Java 11+
+
+# Other projects
+
+Also check out https://github.com/micheljung/jfx-waitomo-theme
