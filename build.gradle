@@ -3,11 +3,13 @@ import org.gradle.internal.os.OperatingSystem
 plugins {
   id 'java-library'
   id 'maven-publish'
-  id 'com.jfrog.bintray' version '1.8.5'
+  id 'signing'
   id "io.franzbecker.gradle-lombok" version "4.0.0"
 }
 
+group = "io.github.micheljung"
 version "${version}"
+description = "Modern dark theme for JavaFX applications"
 
 project.ext.javaFxPlatform = "${javaFxPlatform}"
 
@@ -17,27 +19,13 @@ allprojects {
   targetCompatibility = JavaVersion.VERSION_11
 
   repositories {
-    jcenter()
+    mavenCentral()
   }
 }
 
 java {
   withSourcesJar()
   withJavadocJar()
-}
-
-bintray {
-  user = System.getenv('BINTRAY_USER')
-  key = System.getenv('BINTRAY_KEY')
-  publications = ['mavenJava']
-  pkg {
-    repo = 'maven'
-    name = 'fxstage'
-    licenses = ['GPL-3.0']
-    vcsUrl = 'https://github.com/micheljung/fxstage.git'
-    githubRepo = 'micheljung/fxstage'
-    publicDownloadNumbers = true
-  }
 }
 
 if (javaFxPlatform == "unspecified") {
@@ -68,11 +56,22 @@ dependencies {
 }
 
 publishing {
+  repositories {
+    maven {
+      name = "OSSRH"
+      setUrl("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+      credentials {
+        username = System.getenv("OSSRH_USERNAME")
+        password = System.getenv("OSSRH_TOKEN")
+      }
+    }
+  }
+
   publications {
     mavenJava(MavenPublication) {
-      groupId 'ch.micheljung.fxstage'
+      groupId = "io.github.micheljung"
       artifactId 'fxstage'
-      version project.version
+
       from components.java
       pom {
         name = 'FxStage'
@@ -99,4 +98,9 @@ publishing {
       }
     }
   }
+}
+
+signing {
+  useGpgCmd()
+  sign publishing.publications.mavenJava
 }
