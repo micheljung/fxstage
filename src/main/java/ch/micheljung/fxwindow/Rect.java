@@ -1,6 +1,6 @@
 package ch.micheljung.fxwindow;
 
-import com.sun.jna.platform.win32.WinDef;
+import javafx.stage.Stage;
 
 public class Rect {
   int left;
@@ -15,10 +15,10 @@ public class Rect {
     this.bottom = bottom;
   }
 
-  public Rect(WinDef.RECT rect) {
-    left = rect.left;
-    right = rect.right;
-    top = rect.top;
-    bottom = rect.bottom;
+  public Rect(Stage stage) {
+    left = (int) stage.getX();
+    right = (int) (stage.getX() + stage.getWidth());
+    top = (int) stage.getY();
+    bottom = (int) (stage.getX() + stage.getHeight());
   }
 }

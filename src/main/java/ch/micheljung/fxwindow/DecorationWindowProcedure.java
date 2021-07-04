@@ -2,23 +2,19 @@ package ch.micheljung.fxwindow;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.BaseTSD;
-import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
 import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.stage.Screen;
+import javafx.scene.robot.Robot;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.sun.jna.platform.win32.WinDef.HWND;
-import static com.sun.jna.platform.win32.WinDef.LPARAM;
-import static com.sun.jna.platform.win32.WinDef.LRESULT;
-import static com.sun.jna.platform.win32.WinDef.RECT;
-import static com.sun.jna.platform.win32.WinDef.WPARAM;
+import static com.sun.jna.platform.win32.WinDef.*;
 import static com.sun.jna.platform.win32.WinUser.GWL_WNDPROC;
 import static com.sun.jna.platform.win32.WinUser.WM_DESTROY;
 
@@ -59,6 +55,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
   private static final User32Ex user32Ex = User32Ex.INSTANCE;
 
   public static final LRESULT LRESULT_ZERO = new LRESULT(0);
+  public static final Robot robot = new Robot();
 
   private final WindowController windowController;
 
@@ -75,6 +72,79 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     references.add(this);
   }
 
+  private static HitTestResult hitTest(Rect window, Point mouse, WindowController controller, boolean allowTopResize) {
+    Region controlBox = controller.controlBox;
+    Region titleBar = controller.getTitleBar();
+
+    Node icon = controller.getIcon();
+
+    int top = window.top;
+    int left = window.left;
+    int right = window.right;
+    double frameDragHeight = (titleBar != null
+      ? titleBar.getHeight() : controlBox != null
+      ? controlBox.getHeight() : DEFAULT_FRAME_DRAG_HEIGHT);
+
+    HitTestResult result = HitTestResult.HTCLIENT;
+
+    int resizeBorderThickness = controller.getResizeBorderThickness();
+    int topResizeBorderThickness = resizeBorderThickness - 3;
+    if (mouse.y < top + topResizeBorderThickness) {
+      if (mouse.x < left + resizeBorderThickness) {
+        result = HitTestResult.TOPLEFT;
+      } else if (mouse.x > right - resizeBorderThickness) {
+        result = HitTestResult.TOPRIGHT;
+      } else if (allowTopResize) {
+        result = HitTestResult.TOP;
+      }
+    }
+
+    // Maximized, 'top' is a negative value which needs to be compensated here
+    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -top : 0;
+    if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
+      result = HitTestResult.CAPTION;
+    }
+
+    if (result != HitTestResult.HTCLIENT && (
+      isMouseOn(mouse, controlBox, topInset, window)
+        || isMouseOn(mouse, icon, topInset, window)
+        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node, topInset, window)))) {
+      return HitTestResult.HTCLIENT;
+    }
+    return result;
+  }
+
+  private static boolean isMouseOn(Point mouse, Node node, int topInset, Rect window) {
+    if (node == null || !node.isManaged()) {
+      return false;
+    }
+    Bounds bounds = node.localToScreen(node.getBoundsInLocal());
+    if (bounds == null) {
+      return false;
+    }
+
+    double scaledMouseX = mouse.x;
+    double scaledMouseY = mouse.y;
+
+    // Can't use bounds.contains() because it deals with doubles not integers, which causes rounding issues
+    return scaledMouseX >= bounds.getMinX() && scaledMouseX <= bounds.getMaxX()
+      && scaledMouseY >= bounds.getMinY() + (double) topInset
+      && scaledMouseY <= bounds.getMaxY() + (double) topInset;
+  }
+
+  // I have no idea how to properly detect whether it's maximized because the taskbar will interfere
+  private boolean isMaximized(RECT rect) {
+    if (ptMaxPosition == null) {
+      return false;
+    }
+    short count = 0;
+    count += (rect.top == ptMaxPosition.y) ? 1 : 0;
+    count += (rect.left == ptMaxPosition.x) ? 1 : 0;
+    count += ((rect.right - ptMaxPosition.x) == ptMaxSize.x) ? 1 : 0;
+    count += ((rect.bottom - ptMaxPosition.y) == ptMaxSize.y) ? 1 : 0;
+    return count > 2;
+  }
+
   @Override
   public LRESULT callback(HWND hwnd, int uMsg, WPARAM wparam, LPARAM lParam) {
     LRESULT lresult;
@@ -83,7 +153,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       case WM_NCHITTEST:
         lresult = user32Ex.CallWindowProc(defaultWindowsProcedure, hwnd, uMsg, wparam, lParam);
         if (lresult.intValue() == HitTestResult.HTCLIENT.windowsValue) {
-          lresult = hitTest(hwnd);
+          lresult = hitTest();
         }
         return lresult;
 
@@ -123,87 +193,12 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     }
   }
 
-  // I have no idea how to properly detect whether it's maximized because the taskbar will interfere
-  private boolean isMaximized(RECT rect) {
-    if (ptMaxPosition == null) {
-      return false;
-    }
-    short count = 0;
-    count += (rect.top == ptMaxPosition.y) ? 1 : 0;
-    count += (rect.left == ptMaxPosition.x) ? 1 : 0;
-    count += ((rect.right - ptMaxPosition.x) == ptMaxSize.x) ? 1 : 0;
-    count += ((rect.bottom - ptMaxPosition.y) == ptMaxSize.y) ? 1 : 0;
-    return count > 2;
-  }
+  /**
+   * Determines which area is used for resize and which area is used for dragging.
+   */
+  private LRESULT hitTest() {
+    Point2D mousePosition = robot.getMousePosition();
 
-  /** Determines which area is used for resize and which area is used for dragging. */
-  private LRESULT hitTest(HWND hWnd) {
-    WinDef.POINT mouse = new WinDef.POINT();
-    RECT window = new RECT();
-    User32.INSTANCE.GetCursorPos(mouse);
-    User32.INSTANCE.GetWindowRect(hWnd, window);
-
-    return new LRESULT(hitTest(new Rect(window), new Point(mouse), windowController, features.isAllowTopResize()).windowsValue);
-  }
-
-  static HitTestResult hitTest(Rect window, Point mouse, WindowController controller, boolean allowTopResize) {
-    Region controlBox = controller.controlBox;
-    Region titleBar = controller.getTitleBar();
-
-    Node icon = controller.getIcon();
-
-    int top = window.top;
-    int left = window.left;
-    int right = window.right;
-    double frameDragHeight = (titleBar != null
-      ? titleBar.getHeight() : controlBox != null
-      ? controlBox.getHeight() : DEFAULT_FRAME_DRAG_HEIGHT) * Screen.getPrimary().getOutputScaleY();
-
-    HitTestResult result = HitTestResult.HTCLIENT;
-
-    int resizeBorderThickness = (int) (controller.getResizeBorderThickness() * Screen.getPrimary().getOutputScaleX());
-    int topResizeBorderThickness = (int) (resizeBorderThickness - 3 * Screen.getPrimary().getOutputScaleX());
-    if (mouse.y < top + topResizeBorderThickness) {
-      if (mouse.x < left + resizeBorderThickness) {
-        result = HitTestResult.TOPLEFT;
-      } else if (mouse.x > right - resizeBorderThickness) {
-        result = HitTestResult.TOPRIGHT;
-      } else if (allowTopResize) {
-        result = HitTestResult.TOP;
-      }
-    }
-
-    // Maximized, 'top' is a negative value which needs to be compensated here
-    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -top : 0;
-    if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
-      result = HitTestResult.CAPTION;
-    }
-
-    if (result != HitTestResult.HTCLIENT && (
-      isMouseOn(mouse, controlBox, topInset)
-        || isMouseOn(mouse, icon, topInset)
-        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node, topInset)))) {
-      return HitTestResult.HTCLIENT;
-    }
-
-    return result;
-  }
-
-  private static boolean isMouseOn(Point mouse, Node node, int topInset) {
-    if (node == null || !node.isManaged()) {
-      return false;
-    }
-    Bounds bounds = node.localToScreen(node.getBoundsInLocal());
-    if (bounds == null) {
-      return false;
-    }
-
-    double scaledTopInset = topInset / Screen.getPrimary().getOutputScaleY();
-    double scaledMouseX = mouse.x / Screen.getPrimary().getOutputScaleX();
-    double scaledMouseY = mouse.y / Screen.getPrimary().getOutputScaleY();
-
-    // Can't use bounds.contains() because it deals with doubles not integers, which causes rounding issues
-    return scaledMouseX >= bounds.getMinX() && scaledMouseX <= bounds.getMaxX()
-      && scaledMouseY >= bounds.getMinY() + scaledTopInset && scaledMouseY <= bounds.getMaxY() + scaledTopInset;
+    return new LRESULT(hitTest(new Rect(windowController.getStage()), new Point(mousePosition), windowController, features.isAllowTopResize()).windowsValue);
   }
 }
