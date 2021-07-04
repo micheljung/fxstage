@@ -1,6 +1,6 @@
 package ch.micheljung.fxwindow;
 
-import com.sun.jna.platform.win32.WinDef;
+import javafx.geometry.Point2D;
 import lombok.ToString;
 
 @ToString
@@ -13,8 +13,8 @@ public class Point {
     this.y = y;
   }
 
-  public Point(WinDef.POINT point) {
-    x = point.x;
-    y = point.y;
+  public Point(Point2D mousePosition) {
+    x = (int) mousePosition.getX();
+    y = (int) mousePosition.getY();
   }
 }
