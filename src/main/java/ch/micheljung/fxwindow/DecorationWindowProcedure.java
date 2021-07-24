@@ -53,9 +53,9 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
   public static final int DEFAULT_FRAME_DRAG_HEIGHT = 30;
 
   private static final User32Ex user32Ex = User32Ex.INSTANCE;
+  private static final Robot robot = new Robot();
 
   public static final LRESULT LRESULT_ZERO = new LRESULT(0);
-  public static final Robot robot = new Robot();
 
   private final WindowController windowController;
 
