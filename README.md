@@ -33,11 +33,11 @@ Get it via https://bintray.com/micheljung/maven/fxstage/
 
 ```
 repositories {
-  jcenter()
+  mavenCentral()
 }
 
 dependencies {
-  implementation 'ch.micheljung.fxstage:fxstage:0.6.0'
+  implementation 'ch.micheljung.fxstage:fxstage:0.8.1'
 }
 ```
 
