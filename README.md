@@ -1,6 +1,7 @@
 # FxStage
 
-[ ![Download](https://api.bintray.com/packages/micheljung/maven/fxstage/images/download.svg) ](https://bintray.com/micheljung/maven/fxstage/_latestVersion)
+[ ![Maven central](https://maven-badges.herokuapp.com/maven-central/io.github.micheljung/fxstage/badge.svg) ](https://search.maven.org/artifact/io.github.micheljung/fxstage)
+
 
 A small library to create borderless JavaFX stages with native window behaviour.
 
@@ -29,7 +30,7 @@ FxStage.configure(stage).apply();
 
 ## Get It Now
 
-Get it via https://bintray.com/micheljung/maven/fxstage/
+Get it via https://search.maven.org/artifact/io.github.micheljung/fxstage
 
 ```
 repositories {
