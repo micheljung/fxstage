@@ -51,8 +51,6 @@ dependencies {
   compileOnly "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
-
-  runtimeOnly "org.apache.logging.log4j:log4j-core:${log4j2Version}"
 }
 
 publishing {
