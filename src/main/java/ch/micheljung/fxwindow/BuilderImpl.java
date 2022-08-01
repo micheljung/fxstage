@@ -233,10 +233,14 @@ class BuilderImpl implements StageCreator {
   }
 
   private boolean useWindows() {
-    return Platform.isWindows() && useNative && isWindows10();
+    return Platform.isWindows() && useNative && (isWindows10() || isWindows11() );
   }
 
   private boolean isWindows10() {
     return System.getProperty("os.name").equals("Windows 10");
+  }
+
+  private boolean isWindows11() {
+    return System.getProperty("os.name").equals("Windows 11");
   }
 }
