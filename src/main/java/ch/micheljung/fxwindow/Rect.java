@@ -19,6 +19,6 @@ public class Rect {
     left = (int) stage.getX();
     right = (int) (stage.getX() + stage.getWidth());
     top = (int) stage.getY();
-    bottom = (int) (stage.getX() + stage.getHeight());
+    bottom = (int) (stage.getY() + stage.getHeight());
   }
 }

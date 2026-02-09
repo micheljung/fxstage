@@ -9,7 +9,6 @@ import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.robot.Robot;
-import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,8 +60,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
 
   private final BaseTSD.LONG_PTR defaultWindowsProcedure;
   private final Features features;
-  private WinDef.POINT ptMaxSize;
-  private WinDef.POINT ptMaxPosition;
+  private HWND hwnd;
 
   DecorationWindowProcedure(WindowController windowController, BaseTSD.LONG_PTR defaultWindowsProcedure, Features features) {
     this.windowController = windowController;
@@ -72,7 +70,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     references.add(this);
   }
 
-  private static HitTestResult hitTest(Rect window, Point mouse, WindowController controller, boolean allowTopResize) {
+  private static HitTestResult hitTest(Rect window, Point mouse, WindowController controller, boolean allowTopResize, HWND hwnd) {
     Region controlBox = controller.controlBox;
     Region titleBar = controller.getTitleBar();
 
@@ -99,22 +97,24 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       }
     }
 
-    // Maximized, 'top' is a negative value which needs to be compensated here
-    int topInset = ((Stage) controller.windowRoot.getScene().getWindow()).isMaximized() ? -top : 0;
+    // When maximized, window extends beyond screen bounds
+    // Using Windows API instead of JavaFX's isMaximized() for accurate multi-monitor
+    int topInset = getTopInset(hwnd);
+
     if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
       result = HitTestResult.CAPTION;
     }
 
     if (result != HitTestResult.HTCLIENT && (
-      isMouseOn(mouse, controlBox, topInset, window)
-        || isMouseOn(mouse, icon, topInset, window)
-        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node, topInset, window)))) {
+      isMouseOn(mouse, controlBox)
+        || isMouseOn(mouse, icon)
+        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node)))) {
       return HitTestResult.HTCLIENT;
     }
     return result;
   }
 
-  private static boolean isMouseOn(Point mouse, Node node, int topInset, Rect window) {
+  private static boolean isMouseOn(Point mouse, Node node) {
     if (node == null || !node.isManaged()) {
       return false;
     }
@@ -128,25 +128,56 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
 
     // Can't use bounds.contains() because it deals with doubles not integers, which causes rounding issues
     return scaledMouseX >= bounds.getMinX() && scaledMouseX <= bounds.getMaxX()
-      && scaledMouseY >= bounds.getMinY() + (double) topInset
-      && scaledMouseY <= bounds.getMaxY() + (double) topInset;
+      && scaledMouseY >= bounds.getMinY()
+      && scaledMouseY <= bounds.getMaxY();
   }
 
-  // I have no idea how to properly detect whether it's maximized because the taskbar will interfere
-  private boolean isMaximized(RECT rect) {
-    if (ptMaxPosition == null) {
-      return false;
+  private static int getTopInset(HWND hwnd) {
+    if (hwnd == null || !user32Ex.IsZoomed(hwnd)) {
+      return 0;
     }
-    short count = 0;
-    count += (rect.top == ptMaxPosition.y) ? 1 : 0;
-    count += (rect.left == ptMaxPosition.x) ? 1 : 0;
-    count += ((rect.right - ptMaxPosition.x) == ptMaxSize.x) ? 1 : 0;
-    count += ((rect.bottom - ptMaxPosition.y) == ptMaxSize.y) ? 1 : 0;
-    return count > 2;
+
+    WinDef.RECT windowRect = new WinDef.RECT();
+    if (!user32Ex.GetWindowRect(hwnd, windowRect)) {
+      return 0;
+    }
+
+    WinDef.RECT clientRect = new WinDef.RECT();
+    if (!user32Ex.GetClientRect(hwnd, clientRect)) {
+      return 0;
+    }
+
+    WinDef.POINT clientTopLeft = new WinDef.POINT();
+    clientTopLeft.x = clientRect.left;
+    clientTopLeft.y = clientRect.top;
+    if (!user32Ex.ClientToScreen(hwnd, clientTopLeft)) {
+      return 0;
+    }
+
+    int topInsetPx = clientTopLeft.y - windowRect.top;
+    if (topInsetPx <= 0) {
+      return 0;
+    }
+
+    int dpi = user32Ex.GetDpiForWindow(hwnd);
+    if (dpi == 0) {
+      dpi = 96;
+    }
+    double scale = dpi / 96.0;
+    return (int) Math.round(topInsetPx / scale);
+  }
+
+  /**
+   * Uses the Windows API IsZoomed to properly detect if a window is maximized
+   */
+  private boolean isMaximized(HWND hwnd) {
+    return user32Ex.IsZoomed(hwnd);
   }
 
   @Override
   public LRESULT callback(HWND hwnd, int uMsg, WPARAM wparam, LPARAM lParam) {
+    this.hwnd = hwnd;
+
     LRESULT lresult;
 
     switch (uMsg) {
@@ -166,15 +197,18 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
         if (wparam.intValue() != 0) {
           User32Ex.NCCALCSIZE_PARAMS nCalcSizeParams = new User32Ex.NCCALCSIZE_PARAMS(new Pointer(lParam.longValue()));
           int resizeBorderThickness = windowController.getResizeBorderThickness();
-          // Window is maximized in which case the stage goes off-screen at the top. To avoid that, we set top to 0
-          // but this must only be done when the window is actually being maximized. When the user drags to restore,
-          // 'top' usually is still negative but in that case 'top' must not be set to 0.
-          if (isMaximized(nCalcSizeParams.rgrc[0])) {
-            nCalcSizeParams.rgrc[0].top = Math.max(nCalcSizeParams.rgrc[0].top, 0);
+
+          if (isMaximized(hwnd)) {
+            nCalcSizeParams.rgrc[0].top += resizeBorderThickness;
+            nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
+            nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
+            nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
+          } else {
+            nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
+            nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
+            nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
           }
-          nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
-          nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
-          nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
+
           nCalcSizeParams.write();
           return WVR_VALIDRECTS;
         }
@@ -184,8 +218,6 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
         lresult = user32Ex.CallWindowProc(defaultWindowsProcedure, hwnd, uMsg, wparam, lParam);
         User32Ex.MinMaxInfo minMaxInfo = new User32Ex.MinMaxInfo(new Pointer(lParam.longValue()));
         minMaxInfo.read();
-        ptMaxSize = minMaxInfo.ptMaxSize;
-        ptMaxPosition = minMaxInfo.ptMaxPosition;
         return lresult;
 
       default:
@@ -199,6 +231,6 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
   private LRESULT hitTest() {
     Point2D mousePosition = robot.getMousePosition();
 
-    return new LRESULT(hitTest(new Rect(windowController.getStage()), new Point(mousePosition), windowController, features.isAllowTopResize()).windowsValue);
+    return new LRESULT(hitTest(new Rect(windowController.getStage()), new Point(mousePosition), windowController, features.isAllowTopResize(), hwnd).windowsValue);
   }
 }
