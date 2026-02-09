@@ -32,6 +32,24 @@ public interface User32Ex extends User32 {
   /** Call a window procedure. */
   LRESULT CallWindowProc(LONG_PTR proc, HWND hWnd, int uMsg, WPARAM uParam, LPARAM lParam);
 
+  /**
+   * Determines whether a window is maximized.
+   * @see <a href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-iszoomed">IsZoomed documentation</a>
+   */
+  boolean IsZoomed(HWND hWnd);
+
+  /**
+   * Determines the DPI for a window.
+   * @see <a href="https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getdpiforwindow">GetDpiForWindow documentation</a>
+   */
+  int GetDpiForWindow(HWND hwnd);
+
+  /**
+   * Converts the client-area coordinates of a specified point to screen coordinates.
+   * @see <a href="https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-clienttoscreen">ClientToScreen documentation</a>
+   */
+  boolean ClientToScreen(HWND hwnd, POINT clientTopLeft);
+
   @Structure.FieldOrder({"attribute", "data", "sizeOfData"})
   class WindowCompositionAttributeData extends Structure implements Structure.ByReference {
     public int attribute;
