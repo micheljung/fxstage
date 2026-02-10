@@ -200,14 +200,10 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
 
           if (isMaximized(hwnd)) {
             nCalcSizeParams.rgrc[0].top += resizeBorderThickness;
-            nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
-            nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
-            nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
-          } else {
-            nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
-            nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
-            nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
           }
+          nCalcSizeParams.rgrc[0].left += resizeBorderThickness;
+          nCalcSizeParams.rgrc[0].right -= resizeBorderThickness;
+          nCalcSizeParams.rgrc[0].bottom -= resizeBorderThickness;
 
           nCalcSizeParams.write();
           return WVR_VALIDRECTS;
