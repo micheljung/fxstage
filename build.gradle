@@ -5,6 +5,7 @@ plugins {
   id 'maven-publish'
   id 'signing'
   id "io.franzbecker.gradle-lombok" version "5.0.0"
+  id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
 }
 
 group = "io.github.micheljung"
@@ -101,4 +102,16 @@ publishing {
 signing {
   useGpgCmd()
   sign publishing.publications.mavenJava
+}
+
+nexusPublishing {
+  repositories {
+    // see https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/#configuration
+    sonatype {
+      nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
+      username = System.getenv("SONATYPE_USERNAME")
+      password = System.getenv("SONATYPE_PASSWORD")
+    }
+  }
 }
