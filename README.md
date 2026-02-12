@@ -38,7 +38,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'ch.micheljung.fxstage:fxstage:0.8.1'
+  implementation 'ch.micheljung.fxstage:fxstage:0.8.4'
 }
 ```
 
