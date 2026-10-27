@@ -172,7 +172,15 @@ class BuilderImpl implements StageCreator {
 
     boolean useWindowsNative = useWindows();
     if (useWindowsNative) {
-      whenShown(() -> WindowsCustomStage.configure(controller, features));
+      // The window procedure can only be replaced once the window is shown, so hide the native frame until then
+      double opacity = stage.getOpacity();
+      if (!stage.isShowing()) {
+        stage.setOpacity(0);
+      }
+      whenShown(() -> {
+        WindowsCustomStage.configure(controller, features);
+        stage.setOpacity(opacity);
+      });
     } else {
       stage.getScene().setFill(Color.TRANSPARENT);
       stage.initStyle(StageStyle.TRANSPARENT);
