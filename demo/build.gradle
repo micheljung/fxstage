@@ -11,10 +11,10 @@ dependencies {
   implementation project(':')
   implementation 'io.github.micheljung:jfx-waitomo-theme:0.3.0'
 
-  implementation "org.openjfx:javafx-base:${javaFxVersion}:${javaFxPlatform}"
-  implementation "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
-  implementation "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
-  implementation "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
-  implementation "org.openjfx:javafx-media:${javaFxVersion}:${javaFxPlatform}"
-  implementation "org.openjfx:javafx-web:${javaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-base:${demoJavaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-controls:${demoJavaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-fxml:${demoJavaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-graphics:${demoJavaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-media:${demoJavaFxVersion}:${javaFxPlatform}"
+  implementation "org.openjfx:javafx-web:${demoJavaFxVersion}:${javaFxPlatform}"
 }
