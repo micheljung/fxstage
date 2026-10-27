@@ -9,3 +9,4 @@ gradle-app.setting
 
 !gradle-wrapper.jar
 
+/.omc/
