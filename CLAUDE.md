@@ -57,4 +57,3 @@ If you change caption or resize logic, check whether the other backend needs the
 ## Conventions
 
 - `.editorconfig`: 2-space indentation, LF line endings, UTF-8.
-- The README's dependency snippet uses `ch.micheljung.fxstage:fxstage`, but the published coordinates are `io.github.micheljung:fxstage`.
