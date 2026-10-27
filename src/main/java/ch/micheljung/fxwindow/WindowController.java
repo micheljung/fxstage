@@ -1,6 +1,7 @@
 package ch.micheljung.fxwindow;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -34,6 +35,12 @@ public class WindowController implements FxStage {
   private Region titleBar;
   private Node icon;
 
+  private final ChangeListener<Window> windowListener = (observable, oldWindow, newWindow) -> {
+    if (newWindow instanceof Stage) {
+      initializeStage((Stage) newWindow);
+    }
+  };
+
   public void initialize() {
     minimizeButton.managedProperty().bind(minimizeButton.visibleProperty());
     maximizeButton.managedProperty().bind(maximizeButton.visibleProperty());
@@ -42,18 +49,30 @@ public class WindowController implements FxStage {
 
     restoreButton.visibleProperty().bind(maximizeButton.visibleProperty().not());
 
-    windowRoot.sceneProperty().addListener(sceneProperty ->
-      windowRoot.getScene().windowProperty().addListener(windowProperty -> {
-        maximizeButton.visibleProperty().bind(getStage().maximizedProperty().not());
-        getStage().maximizedProperty().addListener(maximizedProperty -> getStage().getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, getStage().isMaximized()));
-        getStage().iconifiedProperty().addListener((observable, oldValue, newValue) -> {
-          if (!newValue) {
-            // Workaround for minimize button not losing its "pressed" status
-            maximizeButton.arm();
-            maximizeButton.disarm();
-          }
-        });
-      }));
+    windowRoot.sceneProperty().addListener((observable, oldScene, newScene) -> {
+      if (oldScene != null) {
+        oldScene.windowProperty().removeListener(windowListener);
+      }
+      if (newScene != null) {
+        newScene.windowProperty().addListener(windowListener);
+        // The scene may already be attached to a stage, e.g. when configuring a stage that already has a scene
+        if (newScene.getWindow() instanceof Stage) {
+          initializeStage((Stage) newScene.getWindow());
+        }
+      }
+    });
+  }
+
+  private void initializeStage(Stage stage) {
+    maximizeButton.visibleProperty().bind(stage.maximizedProperty().not());
+    stage.maximizedProperty().addListener(maximizedProperty -> stage.getScene().getRoot().pseudoClassStateChanged(MAXIMIZED_PSEUDO_CLASS, stage.isMaximized()));
+    stage.iconifiedProperty().addListener((observable, oldValue, newValue) -> {
+      if (!newValue) {
+        // Workaround for minimize button not losing its "pressed" status
+        maximizeButton.arm();
+        maximizeButton.disarm();
+      }
+    });
   }
 
   public void onMinimizeButtonClicked() {
