@@ -4,10 +4,6 @@ plugins {
   id 'org.openjfx.javafxplugin' version '0.0.8'
 }
 
-repositories {
-  jcenter()
-}
-
 javafx {
   version = javaFxVersion
   modules = ['javafx.controls', 'javafx.fxml', 'javafx.web']
