@@ -9,7 +9,7 @@ plugins {
 
 group = "io.github.micheljung"
 version "${version}"
-description = "Modern dark theme for JavaFX applications"
+description = "True borderless UI for JavaFX"
 
 project.ext.javaFxPlatform = "${javaFxPlatform}"
 
