@@ -4,7 +4,6 @@ plugins {
   id 'java-library'
   id 'maven-publish'
   id 'signing'
-  id "io.franzbecker.gradle-lombok" version "5.0.0"
   id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
 }
 
@@ -52,6 +51,9 @@ dependencies {
   compileOnly "org.openjfx:javafx-controls:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-fxml:${javaFxVersion}:${javaFxPlatform}"
   compileOnly "org.openjfx:javafx-graphics:${javaFxVersion}:${javaFxPlatform}"
+
+  compileOnly "org.projectlombok:lombok:${lombokVersion}"
+  annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 }
 
 publishing {
