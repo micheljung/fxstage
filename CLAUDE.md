@@ -21,7 +21,7 @@ Releases are made by pushing a git tag. `publish.yml` uses the tag name as `-Pve
 
 ## Modules
 
-- `:` (root): the library, in package `ch.micheljung.fxwindow`. JavaFX is `compileOnly`, so consumers supply their own JavaFX. JNA and log4j-api are `api` dependencies. Lombok is applied via the `io.franzbecker.gradle-lombok` plugin (`@Data`, `@Log4j2`).
+- `:` (root): the library, in package `ch.micheljung.fxwindow`. JavaFX is `compileOnly`, so consumers supply their own JavaFX. JNA and log4j-api are `api` dependencies. Lombok is a `compileOnly` + `annotationProcessor` dependency (`@Data`, `@Log4j2`).
 - `demo`: sample app (`ch.micheljung.fxborderlessscene.Main`) that uses the external `jfx-waitomo-theme`.
 - `playground`: standalone Win32/JNA experiments. It is not wired to the library and uses the old `org.openjfx.javafxplugin` plus `jcenter()`.
 - `settings.gradle` also includes `theme-lagoon`, but that directory doesn't exist.
