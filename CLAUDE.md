@@ -22,7 +22,7 @@ Releases are made by pushing a git tag. `publish.yml` uses the tag name as `-Pve
 ## Modules
 
 - `:` (root): the library, in package `ch.micheljung.fxwindow`. JavaFX is `compileOnly`, so consumers supply their own JavaFX. JNA and log4j-api are `api` dependencies. Lombok is a `compileOnly` + `annotationProcessor` dependency (`@Data`, `@Log4j2`).
-- `demo`: sample app (`ch.micheljung.fxborderlessscene.Main`) that uses the external `jfx-waitomo-theme`.
+- `demo`: sample app (`ch.micheljung.fxborderlessscene.Main`) that uses the external `jfx-waitomo-theme`. It runs on `demoJavaFxVersion` (17), because JavaFX 11 crashes at startup on Wayland. The library itself still compiles against `javaFxVersion` (11).
 - `playground`: standalone Win32/JNA experiments. It is not wired to the library and uses the old `org.openjfx.javafxplugin`.
 
 ## Architecture
