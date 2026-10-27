@@ -172,22 +172,15 @@ class BuilderImpl implements StageCreator {
 
     boolean useWindowsNative = useWindows();
     if (useWindowsNative) {
-      if (stage.isShowing()) {
-        WindowsCustomStage.configure(controller, features);
-      } else {
-        EventHandler<WindowEvent> currentOnShown = stage.getOnShown();
-        stage.setOnShown(event -> {
-          stage.setOnShown(currentOnShown);
-          if (currentOnShown != null) {
-            currentOnShown.handle(event);
-          }
-          WindowsCustomStage.configure(controller, features);
-        });
-      }
+      whenShown(() -> WindowsCustomStage.configure(controller, features));
     } else {
       stage.getScene().setFill(Color.TRANSPARENT);
       stage.initStyle(StageStyle.TRANSPARENT);
-      UndecoratedStage.configure(stage, controller, features);
+      if (useLinux()) {
+        LinuxCustomStage.configure(stage, controller, features);
+      } else {
+        UndecoratedStage.configure(stage, controller, features);
+      }
     }
 
     if (applyStyleSheet) {
@@ -198,6 +191,21 @@ class BuilderImpl implements StageCreator {
     }
 
     return controller;
+  }
+
+  private void whenShown(Runnable runnable) {
+    if (stage.isShowing()) {
+      runnable.run();
+      return;
+    }
+    EventHandler<WindowEvent> currentOnShown = stage.getOnShown();
+    stage.setOnShown(event -> {
+      stage.setOnShown(currentOnShown);
+      if (currentOnShown != null) {
+        currentOnShown.handle(event);
+      }
+      runnable.run();
+    });
   }
 
   private WindowController createController() {
@@ -234,6 +242,10 @@ class BuilderImpl implements StageCreator {
 
   private boolean useWindows() {
     return Platform.isWindows() && useNative && (isWindows10() || isWindows11() );
+  }
+
+  private boolean useLinux() {
+    return Platform.isLinux() && useNative && LinuxCustomStage.isSupported();
   }
 
   private boolean isWindows10() {
