@@ -1,33 +1,22 @@
 package ch.micheljung.fxwindow;
 
+import com.sun.jna.Pointer;
+import javafx.beans.InvalidationListener;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Bounds;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
-
-import static ch.micheljung.fxwindow.HitTestResult.BOTTOM;
-import static ch.micheljung.fxwindow.HitTestResult.BOTTOMLEFT;
-import static ch.micheljung.fxwindow.HitTestResult.BOTTOMRIGHT;
-import static ch.micheljung.fxwindow.HitTestResult.HTCLIENT;
-import static ch.micheljung.fxwindow.HitTestResult.LEFT;
-import static ch.micheljung.fxwindow.HitTestResult.NOWHERE;
-import static ch.micheljung.fxwindow.HitTestResult.RIGHT;
-import static ch.micheljung.fxwindow.HitTestResult.TOP;
-import static ch.micheljung.fxwindow.HitTestResult.TOPLEFT;
-import static ch.micheljung.fxwindow.HitTestResult.TOPRIGHT;
 
 public class UndecoratedStage {
 
@@ -41,16 +30,21 @@ public class UndecoratedStage {
   private final Rect resizeStartStageRect;
   /** Mouse position relative to the borders of the stage. */
   private final Rect resizeBorderOffset;
-  private final Rect stageBounds;
   /**
    * The pane, painted on top of the drop shadow, the represents the visible window. This is the stage size minus the
    * drop shadow.
    */
   private final Parent windowRoot;
   private final WindowController windowController;
-  private final Stage aeroSnap;
+  /** A popup rather than a stage, so it neither shows up in the task bar nor steals the focus. */
+  private final Popup aeroSnap;
+  private final Region aeroSnapContent;
+  /** The stage's bounds when it was last not maximized. */
+  private Rectangle2D normalBounds;
 
   private boolean snapped;
+  /** Whether the stage was unmaximized by the current drag. */
+  private boolean unmaximizedByDrag;
 
   private final Features features;
 
@@ -67,23 +61,46 @@ public class UndecoratedStage {
       throw new RuntimeException(e);
     }
 
-    aeroSnap = new Stage();
-    aeroSnap.initStyle(StageStyle.TRANSPARENT);
-    aeroSnap.initModality(Modality.NONE);
-    aeroSnap.setScene(new Scene(loader.getRoot(), Color.TRANSPARENT));
-    aeroSnap.initOwner(stage);
+    aeroSnapContent = loader.getRoot();
+    aeroSnapContent.setMouseTransparent(true);
+    aeroSnap = new Popup();
+    aeroSnap.getContent().add(aeroSnapContent);
+    // The popup may end up under the mouse while the stage is being dragged, in which case it may receive the events.
+    // Their coordinates are relative to the popup, so the handlers must only use screen coordinates.
+    aeroSnap.addEventFilter(MouseEvent.MOUSE_DRAGGED, event -> forward(event, windowRoot.getOnMouseDragged()));
+    aeroSnap.addEventFilter(MouseEvent.MOUSE_RELEASED, event -> forward(event, windowRoot.getOnMouseReleased()));
+    stage.focusedProperty().addListener(observable -> {
+      if (!stage.isFocused()) {
+        aeroSnap.hide();
+      }
+    });
+
+    if (Gtk3.isAvailable()) {
+      enableGtkWindowFunctions();
+    }
 
     stage.addEventFilter(MouseEvent.MOUSE_MOVED, event -> handleMouseMovement(windowRoot, event));
     stage.maximizedProperty().addListener(observable -> {
       if (stage.isMaximized()) {
         maximize();
+      } else {
+        restore();
       }
     });
+
+    InvalidationListener boundsListener = observable -> {
+      if (!stage.isMaximized()) {
+        normalBounds = new Rectangle2D(stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight());
+      }
+    };
+    stage.xProperty().addListener(boundsListener);
+    stage.yProperty().addListener(boundsListener);
+    stage.widthProperty().addListener(boundsListener);
+    stage.heightProperty().addListener(boundsListener);
 
     mousePosition = new Point(0, 0);
     resizeStartStageRect = new Rect(0, 0, 0, 0);
     resizeBorderOffset = new Rect(0, 0, 0, 0);
-    stageBounds = new Rect(0, 0, 0, 0);
     prevSize = new Point(0, 0);
     prevPos = new Point(0, 0);
   }
@@ -92,16 +109,40 @@ public class UndecoratedStage {
     new UndecoratedStage(stage, controller, features);
   }
 
+  /**
+   * Even when imitating native behavior, the window manager needs to be allowed to maximize the window, as JavaFX
+   * wouldn't unmaximize it otherwise.
+   */
+  private void enableGtkWindowFunctions() {
+    GtkWindowFunctions windowFunctions = new GtkWindowFunctions(stage, features);
+    Runnable attach = () -> {
+      Pointer gdkWindow = Gtk3.findGdkWindow(stage, null);
+      if (gdkWindow != null) {
+        windowFunctions.attach(gdkWindow);
+      }
+    };
+    stage.addEventHandler(WindowEvent.WINDOW_SHOWN, event -> attach.run());
+    stage.addEventHandler(WindowEvent.WINDOW_HIDING, event -> windowFunctions.detach());
+    if (stage.isShowing()) {
+      attach.run();
+    }
+  }
+
+  private static void forward(MouseEvent event, EventHandler<? super MouseEvent> handler) {
+    event.consume();
+    if (handler != null) {
+      handler.handle(event);
+    }
+  }
+
   private void handleMouseMovement(Parent root, MouseEvent event) {
-    stageBounds.left = (int) stage.getX();
-    stageBounds.top = (int) stage.getY();
-    stageBounds.right = (int) (stage.getX() + stage.getWidth() - 1);
-    stageBounds.bottom = (int) (stage.getY() + stage.getHeight() - 1);
+    // No button is pressed, so no drag is in progress
+    aeroSnap.hide();
 
     mousePosition.x = (int) event.getScreenX();
     mousePosition.y = (int) event.getScreenY();
 
-    HitTestResult hitTestResult = hitTest(stageBounds, mousePosition, windowController, features.isAllowTopResize());
+    HitTestResult hitTestResult = FrameHitTest.hitTest(stage, windowController, event.getScreenX(), event.getScreenY(), features.isAllowTopResize());
 
     switch (hitTestResult) {
       case TOPLEFT:
@@ -113,7 +154,7 @@ public class UndecoratedStage {
       case BOTTOM:
       case BOTTOMRIGHT:
         if (!stage.isMaximized()) {
-          stage.getScene().setCursor(getCursor(hitTestResult));
+          stage.getScene().setCursor(FrameHitTest.resizeCursor(hitTestResult));
           handleResize(root, hitTestResult);
         }
         break;
@@ -131,27 +172,6 @@ public class UndecoratedStage {
     }
   }
 
-  private Cursor getCursor(HitTestResult hitTestResult) {
-    switch (hitTestResult) {
-      case TOPLEFT:
-        return Cursor.NW_RESIZE;
-      case TOP:
-      case BOTTOM:
-        return Cursor.V_RESIZE;
-      case TOPRIGHT:
-        return Cursor.NE_RESIZE;
-      case LEFT:
-      case RIGHT:
-        return Cursor.H_RESIZE;
-      case BOTTOMLEFT:
-        return Cursor.SW_RESIZE;
-      case BOTTOMRIGHT:
-        return Cursor.SE_RESIZE;
-      default:
-        return Cursor.DEFAULT;
-    }
-  }
-
   /** Maximize on/off the application. */
   protected void maximize() {
     Rectangle2D screen;
@@ -162,9 +182,16 @@ public class UndecoratedStage {
       screen = Screen.getScreensForRectangle(stage.getX(), stage.getY(), stage.getWidth() / 2, stage.getHeight() / 2).get(0).getVisualBounds();
     }
 
-    // Record position and size, and maximize.
+    // Record position and size, and maximize. The stage may already have been resized by the window manager.
     if (!snapped) {
-      rememberPreviousState();
+      if (normalBounds != null) {
+        prevPos.x = (int) normalBounds.getMinX();
+        prevPos.y = (int) normalBounds.getMinY();
+        prevSize.x = (int) normalBounds.getWidth();
+        prevSize.y = (int) normalBounds.getHeight();
+      } else {
+        rememberPreviousState();
+      }
     } else if (!screen.contains(prevPos.x, prevPos.y)) {
       if (prevSize.x > screen.getWidth()) {
         prevSize.x = (int) (screen.getWidth() - 20);
@@ -184,6 +211,18 @@ public class UndecoratedStage {
     stage.setHeight(screen.getHeight());
   }
 
+  /** Restores the position and size the stage had before it was maximized. */
+  private void restore() {
+    snapped = false;
+    if (prevSize.x <= 0 || prevSize.y <= 0) {
+      return;
+    }
+    stage.setX(prevPos.x);
+    stage.setY(prevPos.y);
+    stage.setWidth(prevSize.x);
+    stage.setHeight(prevSize.y);
+  }
+
   protected void handleMove(final Node node) {
     final Delta delta = new Delta();
     final Delta eventSource = new Delta();
@@ -194,6 +233,7 @@ public class UndecoratedStage {
         delta.x = m.getSceneX();
         delta.y = m.getSceneY();
 
+        unmaximizedByDrag = false;
         if (stage.isMaximized() || snapped) {
           delta.x = prevSize.x * (m.getSceneX() / stage.getWidth());
           delta.y = prevSize.y * (m.getSceneY() / stage.getHeight());
@@ -209,6 +249,12 @@ public class UndecoratedStage {
     // Dragging moves the application around.
     node.setOnMouseDragged(m -> {
       if (m.isPrimaryButtonDown()) {
+        // Aero Snap off. Only once, as the window manager may take a while to restore the window.
+        if (stage.isMaximized() && !unmaximizedByDrag) {
+          unmaximizedByDrag = true;
+          stage.setMaximized(false);
+        }
+
         // Move x axis.
         stage.setX(m.getScreenX() - delta.x);
 
@@ -228,49 +274,24 @@ public class UndecoratedStage {
           stage.setY(m.getScreenY() - delta.y);
         }
 
-        // Aero Snap off.
-        if (stage.isMaximized()) {
-          stage.setWidth(prevSize.x);
-          stage.setHeight(prevSize.y);
-          stage.setMaximized(false);
-        }
-
         Rectangle2D screen = Screen.getScreensForRectangle(m.getScreenX(), m.getScreenY(), 1, 1).get(0).getVisualBounds();
 
         // Aero Snap Left.
         if (m.getScreenX() <= screen.getMinX()) {
-          aeroSnap.setY(screen.getMinY());
-          aeroSnap.setHeight(screen.getHeight());
-
-          aeroSnap.setX(screen.getMinX());
-          aeroSnap.setWidth(Math.max(screen.getWidth() / 2, aeroSnap.getMinWidth()));
-
-          aeroSnap.show();
+          showAeroSnap(screen.getMinX(), screen.getMinY(), Math.max(screen.getWidth() / 2, stage.getMinWidth()), screen.getHeight());
         }
 
         // Aero Snap Right.
         else if (m.getScreenX() >= screen.getMaxX() - 1) {
-          aeroSnap.setY(screen.getMinY());
-          aeroSnap.setHeight(screen.getHeight());
-
-          aeroSnap.setWidth(Math.max(screen.getWidth() / 2, aeroSnap.getMinWidth()));
-          aeroSnap.setX(screen.getMaxX() - aeroSnap.getWidth());
-
-          aeroSnap.show();
+          double width = Math.max(screen.getWidth() / 2, stage.getMinWidth());
+          showAeroSnap(screen.getMaxX() - width, screen.getMinY(), width, screen.getHeight());
         }
 
         // Aero Snap Top. || Aero Snap Bottom.
         else if (m.getScreenY() <= screen.getMinY() || m.getScreenY() >= screen.getMaxY() - 1) {
-
-          aeroSnap.setX(screen.getMinX());
-          aeroSnap.setY(screen.getMinY());
-          aeroSnap.setWidth(screen.getWidth());
-          aeroSnap.setHeight(screen.getHeight());
-
-          aeroSnap.show();
-
+          showAeroSnap(screen.getMinX(), screen.getMinY(), screen.getWidth(), screen.getHeight());
         } else {
-          aeroSnap.close();
+          aeroSnap.hide();
         }
       }
     });
@@ -312,23 +333,6 @@ public class UndecoratedStage {
 
           // Aero Snap Top & Bottom
           else if (m.getScreenY() <= screen.getMinY() || m.getScreenY() >= screen.getMaxY() - 1) {
-            if (!screen.contains(prevPos.x, prevPos.y)) {
-              if (prevSize.x > screen.getWidth()) {
-                prevSize.x = (int) (screen.getWidth() - 20);
-              }
-
-              if (prevSize.y > screen.getHeight()) {
-                prevSize.y = (int) (screen.getHeight() - 20);
-              }
-
-              prevPos.x = (int) (screen.getMinX() + (screen.getWidth() - prevSize.x) / 2);
-              prevPos.y = (int) (screen.getMinY() + (screen.getHeight() - prevSize.y) / 2);
-            }
-
-            stage.setX(screen.getMinX());
-            stage.setY(screen.getMinY());
-            stage.setWidth(screen.getWidth());
-            stage.setHeight(screen.getHeight());
             stage.setMaximized(true);
           }
         }
@@ -336,7 +340,7 @@ public class UndecoratedStage {
         throw new RuntimeException(e);
       }
 
-      aeroSnap.close();
+      aeroSnap.hide();
     });
   }
 
@@ -481,6 +485,16 @@ public class UndecoratedStage {
       || hitTestResult == HitTestResult.TOPRIGHT;
   }
 
+  private void showAeroSnap(double x, double y, double width, double height) {
+    aeroSnapContent.setPrefSize(width, height);
+    if (aeroSnap.isShowing()) {
+      aeroSnap.setX(x);
+      aeroSnap.setY(y);
+    } else {
+      aeroSnap.show(stage, x, y);
+    }
+  }
+
   private void rememberPreviousState() {
     prevSize.x = (int) stage.getWidth();
     prevSize.y = (int) stage.getHeight();
@@ -488,77 +502,4 @@ public class UndecoratedStage {
     prevPos.y = (int) stage.getY();
   }
 
-
-  static HitTestResult hitTest(Rect window, Point mouse, WindowController controller, boolean allowTopResize) {
-    Region controlBox = controller.controlBox;
-    Region titleBar = controller.getTitleBar();
-
-    Node icon = controller.getIcon();
-
-    int top = window.top;
-    int left = window.left;
-    int right = window.right;
-    int bottom = window.bottom;
-    double frameDragHeight = titleBar != null
-      ? titleBar.getHeight() : controlBox != null
-      ? controlBox.getHeight() : DEFAULT_FRAME_DRAG_HEIGHT;
-
-    HitTestResult result = HitTestResult.HTCLIENT;
-
-    HitTestResult vertical = NOWHERE;
-    int resizeBorderThickness = controller.getResizeBorderThickness();
-    if (mouse.y > top + resizeBorderThickness && mouse.y <= top + 2 * resizeBorderThickness) {
-      result = vertical = TOP;
-    } else if (mouse.y >= bottom - resizeBorderThickness) {
-      result = vertical = BOTTOM;
-    }
-
-    HitTestResult horizontal = NOWHERE;
-    if (mouse.y >= top + resizeBorderThickness) {
-      if (mouse.x <= left + resizeBorderThickness) {
-        result = horizontal = LEFT;
-      } else if (mouse.x >= right - resizeBorderThickness) {
-        result = horizontal = RIGHT;
-      }
-    }
-
-    if (vertical == TOP) {
-      if (horizontal == LEFT) {
-        result = TOPLEFT;
-      } else if (horizontal == RIGHT) {
-        result = TOPRIGHT;
-      }
-    }
-
-    if (vertical == BOTTOM) {
-      if (horizontal == LEFT) {
-        result = BOTTOMLEFT;
-      } else if (horizontal == RIGHT) {
-        result = BOTTOMRIGHT;
-      }
-    }
-
-    if ((result == HTCLIENT || (result == TOP && !allowTopResize))
-      && mouse.y >= top + resizeBorderThickness
-      && mouse.y <= top + resizeBorderThickness + frameDragHeight) {
-      result = HitTestResult.CAPTION;
-    }
-
-    if (result != HitTestResult.HTCLIENT && (
-      isMouseOn(mouse, controlBox)
-        || isMouseOn(mouse, icon)
-        || controller.getNonCaptionNodes().stream().anyMatch(node -> isMouseOn(mouse, node)))) {
-      return HitTestResult.HTCLIENT;
-    }
-
-    return result;
-  }
-
-  private static boolean isMouseOn(Point mouse, Node node) {
-    if (node == null || !node.isManaged()) {
-      return false;
-    }
-    Bounds bounds = node.localToScreen(node.getBoundsInLocal());
-    return bounds != null && bounds.contains(mouse.x, mouse.y);
-  }
 }

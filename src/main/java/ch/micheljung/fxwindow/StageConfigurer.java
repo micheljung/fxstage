@@ -30,7 +30,10 @@ public interface StageConfigurer {
 
   /**
    * If {@code true}, native window behavior (like Aero glass, Aero Snap) will be used instead of a cross-platform
-   * imitation of it. Currently, this is only supported on Windows 10.
+   * imitation of it. This is supported on Windows 10 and 11, and on Linux if JavaFX uses GTK 3 (the default), where
+   * moving, resizing, snapping and maximizing are left to the window manager. If the native window can't be found, the
+   * imitation is used. On Linux, the imitation still allows the window manager to maximize the window if JavaFX uses
+   * GTK 3, as JavaFX wouldn't unmaximize it otherwise. Default is {@code true}.
    */
   StageConfigurer useNative(boolean useNative);
 
