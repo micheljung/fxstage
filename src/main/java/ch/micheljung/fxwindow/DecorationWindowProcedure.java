@@ -191,7 +191,8 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       case WM_DESTROY:
         user32Ex.SetWindowLongPtr(hwnd, GWL_WNDPROC, defaultWindowsProcedure);
         references.remove(this);
-        return LRESULT_ZERO;
+        // The original window procedure needs to handle WM_DESTROY as well, so it can clean up the window
+        return user32Ex.CallWindowProc(defaultWindowsProcedure, hwnd, uMsg, wparam, lParam);
 
       case WM_NCCALCSIZE:
         if (wparam.intValue() != 0) {
