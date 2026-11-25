@@ -5,10 +5,8 @@ import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
 import javafx.geometry.Bounds;
-import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
-import javafx.scene.robot.Robot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +50,6 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
   public static final int DEFAULT_FRAME_DRAG_HEIGHT = 30;
 
   private static final User32Ex user32Ex = User32Ex.INSTANCE;
-  private static final Robot robot = new Robot();
 
   public static final LRESULT LRESULT_ZERO = new LRESULT(0);
 
@@ -99,7 +96,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
 
     // When maximized, window extends beyond screen bounds
     // Using Windows API instead of JavaFX's isMaximized() for accurate multi-monitor
-    int topInset = getTopInset(hwnd);
+    int topInset = user32Ex.IsZoomed(hwnd) ? -top : 0;
 
     if (result == HitTestResult.HTCLIENT && mouse.y <= top + topInset + frameDragHeight) {
       result = HitTestResult.CAPTION;
@@ -118,7 +115,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     if (node == null || !node.isManaged()) {
       return false;
     }
-    Bounds bounds = node.localToScreen(node.getBoundsInLocal());
+    Bounds bounds = node.localToScene(node.getBoundsInLocal());
     if (bounds == null) {
       return false;
     }
@@ -130,41 +127,6 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
     return scaledMouseX >= bounds.getMinX() && scaledMouseX <= bounds.getMaxX()
       && scaledMouseY >= bounds.getMinY()
       && scaledMouseY <= bounds.getMaxY();
-  }
-
-  private static int getTopInset(HWND hwnd) {
-    if (hwnd == null || !user32Ex.IsZoomed(hwnd)) {
-      return 0;
-    }
-
-    WinDef.RECT windowRect = new WinDef.RECT();
-    if (!user32Ex.GetWindowRect(hwnd, windowRect)) {
-      return 0;
-    }
-
-    WinDef.RECT clientRect = new WinDef.RECT();
-    if (!user32Ex.GetClientRect(hwnd, clientRect)) {
-      return 0;
-    }
-
-    WinDef.POINT clientTopLeft = new WinDef.POINT();
-    clientTopLeft.x = clientRect.left;
-    clientTopLeft.y = clientRect.top;
-    if (!user32Ex.ClientToScreen(hwnd, clientTopLeft)) {
-      return 0;
-    }
-
-    int topInsetPx = clientTopLeft.y - windowRect.top;
-    if (topInsetPx <= 0) {
-      return 0;
-    }
-
-    int dpi = user32Ex.GetDpiForWindow(hwnd);
-    if (dpi == 0) {
-      dpi = 96;
-    }
-    double scale = dpi / 96.0;
-    return (int) Math.round(topInsetPx / scale);
   }
 
   /**
@@ -184,7 +146,7 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
       case WM_NCHITTEST:
         lresult = user32Ex.CallWindowProc(defaultWindowsProcedure, hwnd, uMsg, wparam, lParam);
         if (lresult.intValue() == HitTestResult.HTCLIENT.windowsValue) {
-          lresult = hitTest();
+          lresult = hitTest(hwnd, lParam);
         }
         return lresult;
 
@@ -224,10 +186,38 @@ class DecorationWindowProcedure implements WinUser.WindowProc {
 
   /**
    * Determines which area is used for resize and which area is used for dragging.
+   *
+   * <p>Everything is compared in client-relative logical pixels, which are the scene coordinates. The cursor is taken
+   * from {@code lParam} instead of JavaFX because on mixed-DPI multi-monitor setups JavaFX may map screen coordinates
+   * through the wrong screen.</p>
    */
-  private LRESULT hitTest() {
-    Point2D mousePosition = robot.getMousePosition();
+  private LRESULT hitTest(HWND hwnd, LPARAM lParam) {
+    WinDef.RECT windowRect = new WinDef.RECT();
+    WinDef.POINT clientOrigin = new WinDef.POINT();
+    if (!user32Ex.GetWindowRect(hwnd, windowRect) || !user32Ex.ClientToScreen(hwnd, clientOrigin)) {
+      return new LRESULT(HitTestResult.HTCLIENT.windowsValue);
+    }
 
-    return new LRESULT(hitTest(new Rect(windowController.getStage()), new Point(mousePosition), windowController, features.isAllowTopResize(), hwnd).windowsValue);
+    // The scale JavaFX lays out the scene with, so the cursor and node bounds are in the same units
+    double scaleX = windowController.getStage().getOutputScaleX();
+    double scaleY = windowController.getStage().getOutputScaleY();
+
+    // Screen coordinates are signed 16-bit values, negative on monitors left of or above the primary monitor
+    long value = lParam.longValue();
+    int mouseX = (short) (value & 0xFFFF);
+    int mouseY = (short) ((value >> 16) & 0xFFFF);
+
+    Rect window = new Rect(
+      (int) Math.round((windowRect.left - clientOrigin.x) / scaleX),
+      (int) Math.round((windowRect.top - clientOrigin.y) / scaleY),
+      (int) Math.round((windowRect.right - clientOrigin.x) / scaleX),
+      (int) Math.round((windowRect.bottom - clientOrigin.y) / scaleY)
+    );
+    Point mouse = new Point(
+      (int) Math.floor((mouseX - clientOrigin.x) / scaleX),
+      (int) Math.floor((mouseY - clientOrigin.y) / scaleY)
+    );
+
+    return new LRESULT(hitTest(window, mouse, windowController, features.isAllowTopResize(), hwnd).windowsValue);
   }
 }
