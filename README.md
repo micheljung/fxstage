@@ -41,7 +41,7 @@ repositories {
 }
 
 dependencies {
-  implementation 'io.github.micheljung:fxstage:0.8.4'
+  implementation 'io.github.micheljung:fxstage:0.9.2'
 }
 ```
 
